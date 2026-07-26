@@ -168,6 +168,36 @@
   .mm-checklist-item svg{width:15px; height:15px; margin-top:2px; color:var(--steel); flex-shrink:0;}
   .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
 
+  /* ---------- org chart ---------- */
+  .org-tree{display:flex; flex-direction:column; align-items:center; margin-bottom:8px;}
+  .org-tree-connector-down{width:2px; height:26px; background:var(--border-strong);}
+  .org-tree-row{display:flex; gap:28px; flex-wrap:wrap; justify-content:center; border-top:2px solid var(--border-strong); padding-top:26px; position:relative;}
+  .org-tree-branch{position:relative;}
+  .org-tree-branch::before{content:''; position:absolute; top:-26px; left:50%; width:2px; height:26px; background:var(--border-strong);}
+
+  .person-card{display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; width:150px;}
+  .person-avatar{border-radius:50%; object-fit:cover; border:2px solid var(--border-strong); flex-shrink:0;}
+  .person-avatar-initials{display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; border-style:solid; border-width:2px;}
+  .person-info{display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .person-name{font-weight:600; font-size:13px; color:var(--ink); line-height:1.3;}
+  .person-title{font-size:11px; color:var(--ink-soft); line-height:1.3;}
+  .person-meta{display:flex; gap:4px; margin-top:2px; flex-wrap:wrap; justify-content:center;}
+  .person-meta .chip{font-size:9.5px; padding:1px 6px;}
+  .person-schedule{font-size:9.5px; color:var(--ink-faint); margin-top:2px; line-height:1.3;}
+
+  .org-team-section{margin-bottom:30px;}
+  .org-team-head{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+  .org-team-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .org-team-title{font-family:var(--display); font-weight:600; font-size:14px; color:var(--ink);}
+  .org-team-grid{display:flex; flex-wrap:wrap; gap:22px 18px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px;}
+
+  .photo-upload-row{display:flex; align-items:center; gap:14px;}
+  .photo-uploading{width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--ink-faint); border:2px dashed var(--border-strong); text-align:center;}
+
+  @media (max-width: 700px){
+    .org-team-grid{justify-content:center;}
+  }
+
   /* ---------- process board ---------- */
   .board-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
   .board-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
@@ -373,7 +403,7 @@ const PAGES = [
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
   { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:true  },
   { id:'process',   label:'Process Board',             icon:'flow',     ready:true  },
-  { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:false },
+  { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:true  },
   { id:'schedule',  label:'Employee Schedule',         icon:'calendar', ready:false },
 ];
 const SETTINGS_PAGE = { id:'settings', label:'Settings', icon:'gear' };
@@ -403,6 +433,7 @@ let usingDemoDataHuntGroups = false;
 let usingDemoDataLifecycle = false;
 let usingDemoDataSubprocesses = false;
 let usingDemoDataRules = false;
+let usingDemoDataOrg = false;
 let pricingRows = [];
 let mmRows = [];
 let vendorRows = [];
@@ -414,6 +445,7 @@ let huntGroupRows = [];
 let lifecycleRows = [];
 let subprocessRows = [];
 let roRulesRows = [];
+let orgRows = [];
 let editingId = null;
 let editingTable = 'pricing';
 let editingVendorId = null;
@@ -466,6 +498,8 @@ const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_numbe
 const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "phase": "Intake & Scheduling", "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "phase": "Intake & Scheduling", "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-30", "sort_order": 30, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-40", "sort_order": 40, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter area"}, {"id": "lcseed-50", "sort_order": 50, "phase": "Intake & Scheduling", "role": "Manager", "step_text": "Work Distribution"}, {"id": "lcseed-60", "sort_order": 60, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "phase": "Diagnosis & Inspection", "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "phase": "Customer Approval", "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-110", "sort_order": 110, "phase": "Customer Approval", "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-120", "sort_order": 120, "phase": "Customer Approval", "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-130", "sort_order": 130, "phase": "Customer Approval", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-140", "sort_order": 140, "phase": "Repair Execution & QC", "role": "Parts", "step_text": "Deliver Authorized A.S.R.'s to Technician"}, {"id": "lcseed-150", "sort_order": 150, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-160", "sort_order": 160, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-170", "sort_order": 170, "phase": "Repair Execution & QC", "role": "Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-180", "sort_order": 180, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-190", "sort_order": 190, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-200", "sort_order": 200, "phase": "Follow-Up", "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-210", "sort_order": 210, "phase": "Follow-Up", "role": "Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
 const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
 const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
+
+const SEED_DATA_ORG = [{"id": "orgseed-mason", "sort_order": 10, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null}, {"id": "orgseed-jared", "sort_order": 20, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason"}, {"id": "orgseed-svcmgr", "sort_order": 30, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-qcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-bdclead", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-waylon", "sort_order": 60, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-danny", "sort_order": 70, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kaci", "sort_order": 80, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-jesse", "sort_order": 90, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-erick", "sort_order": 100, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kassandra", "sort_order": 110, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-tate", "sort_order": 120, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-zach", "sort_order": 130, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kyen", "sort_order": 140, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-greeter", "sort_order": 150, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-tara", "sort_order": 160, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-stuart", "sort_order": 170, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared"}, {"id": "orgseed-bdcrep", "sort_order": 180, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead"}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -623,6 +657,19 @@ async function loadRules(){
   roRulesRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
+async function loadOrg(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/org`);
+    if(!res.ok) throw new Error('bad response');
+    orgRows = await res.json();
+    usingDemoDataOrg = false;
+  }catch(err){
+    orgRows = JSON.parse(JSON.stringify(SEED_DATA_ORG));
+    usingDemoDataOrg = true;
+  }
+  orgRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
 function fmtMoney(v){
   if(v === null || v === undefined || v === '') return '';
   return '$' + Number(v).toFixed(2);
@@ -687,6 +734,7 @@ const TABLE_ACTIONS = {
   lifecycle:    { edit: 'openLifecycleEdit',  delete: 'deleteLifecycleRow' },
   subprocess:   { edit: 'openSubprocessEdit', delete: 'deleteSubprocessRow' },
   rorules:      { edit: 'openRuleEdit',       delete: 'deleteRuleRow' },
+  org:          { edit: 'openOrgEdit',        delete: 'deleteOrgRow' },
 };
 
 function actionButtons(id, table){
@@ -1153,6 +1201,101 @@ function renderProcessPage(){
 }
 
 /* ================================================================
+   PAGE: Org Chart
+   ================================================================ */
+const DEPARTMENT_ORDER = ['Management', 'Advisor', 'Technician', 'Parts', 'BDC', 'Front Office'];
+const DEPARTMENT_COLORS = {
+  Management: '#B7B9C0',
+  Advisor: '#E838D6',
+  Technician: '#33D66A',
+  Parts: '#F2952F',
+  BDC: '#E8D22E',
+  'Front Office': '#4FA8E8',
+};
+function deptColor(dept){ return DEPARTMENT_COLORS[dept] || '#8B8D93'; }
+
+function initials(name){
+  if(!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if(parts.length === 0) return '?';
+  if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
+
+function personAvatarHTML(emp, size){
+  size = size || 64;
+  const color = deptColor(emp.department);
+  if(emp.photo_url){
+    return `<img class="person-avatar" src="${escapeAttr(emp.photo_url)}" alt="${escapeAttr(emp.name)}" style="width:${size}px;height:${size}px;border-color:${color};">`;
+  }
+  const fontSize = Math.round(size * 0.34);
+  return `<div class="person-avatar person-avatar-initials" style="width:${size}px;height:${size}px;font-size:${fontSize}px;background:${color}22;color:${color};border-color:${color}66;">${escapeHtml(initials(emp.name))}</div>`;
+}
+
+function personCardHTML(emp){
+  const nameDisplay = emp.is_tbd ? `<span class="ink-faint-text">Open position</span>` : escapeHtml(emp.name);
+  const metaBits = [];
+  if(emp.employee_number) metaBits.push(`<span class="chip">#${escapeHtml(emp.employee_number)}</span>`);
+  if(emp.tech_number) metaBits.push(`<span class="chip">Tech ${escapeHtml(emp.tech_number)}</span>`);
+  return `<div class="person-card">
+    ${personAvatarHTML(emp, 64)}
+    <div class="person-info">
+      <div class="person-name">${nameDisplay}</div>
+      <div class="person-title">${escapeHtml(emp.title)}</div>
+      ${metaBits.length ? `<div class="person-meta">${metaBits.join('')}</div>` : ''}
+      ${emp.schedule ? `<div class="person-schedule">${escapeHtml(emp.schedule)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function orgChartHTML(){
+  const root = orgRows.find(r => !r.reports_to);
+  if(!root){
+    return `<div class="table-wrap"><div class="empty-hint">No org chart data yet.</div></div>`;
+  }
+  const managers = orgRows.filter(r => r.reports_to === root.id);
+
+  const treeHtml = `
+    <div class="org-tree">
+      <div class="org-tree-root">${personCardHTML(root)}</div>
+      <div class="org-tree-connector-down"></div>
+      <div class="org-tree-row">
+        ${managers.map(m => `<div class="org-tree-branch">${personCardHTML(m)}</div>`).join('')}
+      </div>
+    </div>`;
+
+  const teamsHtml = managers.map(m => {
+    const reports = orgRows.filter(r => r.reports_to === m.id);
+    if(!reports.length) return '';
+    return `<div class="org-team-section">
+      <div class="org-team-head">
+        <span class="org-team-dot" style="background:${deptColor(m.department)}"></span>
+        <span class="org-team-title">${escapeHtml(m.title)}${m.is_tbd ? '' : ' — ' + escapeHtml(m.name)}</span>
+      </div>
+      <div class="org-team-grid">
+        ${reports.map(r => personCardHTML(r)).join('')}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  return treeHtml + teamsHtml;
+}
+
+function renderOrgChartPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Org chart</h2>
+        <div class="desc">Who's who at Interstate Honda — reporting lines up top, full team rosters below so you can put a face to a name.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataOrg, 'org')}
+    <div class="board-legend">${DEPARTMENT_ORDER.filter(d => orgRows.some(e => e.department === d)).map(d => `<span class="board-legend-item"><span class="board-legend-dot" style="background:${deptColor(d)}"></span>${d}</span>`).join('')}</div>
+    ${orgChartHTML()}
+  `;
+}
+
+/* ================================================================
    PAGE: Settings
    ================================================================ */
 const SETTINGS_TABLE_META = {
@@ -1162,6 +1305,7 @@ const SETTINGS_TABLE_META = {
   oilguide: { label: 'Oil Application Guide' },
   phones: { label: 'Phone Extensions' },
   process: { label: 'Process Board' },
+  orgchart: { label: 'Org Chart' },
 };
 
 function settingsTabsHTML(){
@@ -1200,6 +1344,9 @@ function renderSettingsPage(){
   }
   if(settingsTab === 'process'){
     return renderProcessSettings();
+  }
+  if(settingsTab === 'orgchart'){
+    return renderOrgSettings();
   }
   return `
     <div class="topbar">
@@ -1474,6 +1621,41 @@ function renderProcessSettings(){
   `;
 }
 
+/* ---------- Org Chart Settings ---------- */
+function orgSettingsTableHTML(){
+  const byId = {};
+  orgRows.forEach(e => byId[e.id] = e);
+  const rowsHtml = orgRows.map(r => `<tr class="row-item">
+    <td>${personAvatarHTML(r, 32)}</td>
+    <td>${r.is_tbd ? `<span class="ink-faint-text">Open position</span>` : escapeHtml(r.name)}</td>
+    <td>${escapeHtml(r.title)}</td>
+    <td><span class="role-badge" style="background:${deptColor(r.department)}">${escapeHtml(r.department)}</span></td>
+    <td>${r.reports_to && byId[r.reports_to] ? escapeHtml(byId[r.reports_to].name) : '<span class="ink-faint-text">—</span>'}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'org')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:50px"></th><th>Name</th><th>Title</th><th style="width:120px">Department</th><th>Reports to</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="6" class="empty-hint">No employees yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderOrgSettings(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openOrgAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add employee</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    ${demoBanner(usingDemoDataOrg, 'org')}
+    ${orgSettingsTableHTML()}
+  `;
+}
+
 function mmSettingsTableHTML(){
   const typeLabels = { main:'Main code', checklist:'Checklist item', sub:'Number code' };
   const rowsHtml = mmRows.map(r => `<tr class="row-item">
@@ -1533,6 +1715,9 @@ async function render(){
     if(subprocessRows.length === 0) await loadSubprocesses();
     if(roRulesRows.length === 0) await loadRules();
     main.innerHTML = renderProcessPage();
+  } else if(currentPage === 'orgchart'){
+    if(orgRows.length === 0) await loadOrg();
+    main.innerHTML = renderOrgChartPage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
     if(mmRows.length === 0) await loadMMCodes();
@@ -1545,6 +1730,7 @@ async function render(){
     if(lifecycleRows.length === 0) await loadLifecycle();
     if(subprocessRows.length === 0) await loadSubprocesses();
     if(roRulesRows.length === 0) await loadRules();
+    if(orgRows.length === 0) await loadOrg();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -1793,6 +1979,7 @@ function handleModalSave(){
   else if(editingTable === 'subprocess') saveSubprocessRow();
   else if(editingTable === 'subprocessStep') saveSubStepRow();
   else if(editingTable === 'rorules') saveRuleRow();
+  else if(editingTable === 'org') saveOrgRow();
   else saveRow();
 }
 
@@ -2756,6 +2943,173 @@ async function deleteRuleRow(id){
   roRulesRows = roRulesRows.filter(r => r.id !== id);
   if(!usingDemoDataRules){
     try{ await fetch(`${CONFIG.API_BASE}/rorules/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Org Chart CRUD ---------- */
+function emptyOrgRow(){
+  return { name:'', title:'', department: DEPARTMENT_ORDER[0], reports_to:'', employee_number:'', tech_number:'', schedule:'', photo_url:'', is_tbd:false };
+}
+
+function openOrgAdd(){
+  editingId = null;
+  editingTable = 'org';
+  document.getElementById('modalTitle').textContent = 'Add employee';
+  document.getElementById('modalBody').innerHTML = orgModalFormHTML(emptyOrgRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openOrgEdit(id){
+  const row = orgRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'org';
+  document.getElementById('modalTitle').textContent = 'Edit employee';
+  document.getElementById('modalBody').innerHTML = orgModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function orgModalFormHTML(r){
+  const deptOptions = DEPARTMENT_ORDER.map(d => `<option value="${d}" ${r.department === d ? 'selected':''}>${d}</option>`).join('');
+  const reportsToOptions = ['<option value="">— None (top of chart) —</option>']
+    .concat(orgRows.filter(e => e.id !== r.id).map(e => `<option value="${e.id}" ${r.reports_to === e.id ? 'selected':''}>${escapeHtml(e.name)} — ${escapeHtml(e.title)}</option>`))
+    .join('');
+  const currentPhoto = personAvatarHTML(r, 64);
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Photo</label>
+        <div class="photo-upload-row">
+          <div id="photoPreview">${currentPhoto}</div>
+          <div>
+            <input type="file" id="o_photo_file" accept="image/*" style="display:none" onchange="handlePhotoFileSelect(event)">
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('o_photo_file').click()">Upload photo</button>
+            ${r.photo_url ? `<button type="button" class="btn btn-sm btn-danger" onclick="clearOrgPhoto()">Remove</button>` : ''}
+          </div>
+        </div>
+        <input type="hidden" id="o_photo_url" value="${escapeAttr(r.photo_url)}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="o_name" value="${escapeAttr(r.name)}" placeholder="Full name">
+      </div>
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="o_title" value="${escapeAttr(r.title)}" placeholder="e.g. Main Shop Advisor">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Department</label>
+        <select id="o_department">${deptOptions}</select>
+      </div>
+      <div class="field">
+        <label>Reports to</label>
+        <select id="o_reports_to">${reportsToOptions}</select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Employee #</label>
+        <input type="text" id="o_employee_number" value="${escapeAttr(r.employee_number)}" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label>Tech # (rotating schedule)</label>
+        <input type="text" id="o_tech_number" value="${escapeAttr(r.tech_number)}" placeholder="Optional, e.g. 1000">
+      </div>
+      <div class="field">
+        <label>Schedule</label>
+        <input type="text" id="o_schedule" value="${escapeAttr(r.schedule)}" placeholder="Optional">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="checkbox-row">
+        <input type="checkbox" id="o_is_tbd" ${r.is_tbd ? 'checked':''}>
+        <label for="o_is_tbd">Position open / not yet filled ("To Be Determined")</label>
+      </div>
+    </div>
+  `;
+}
+
+async function handlePhotoFileSelect(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const preview = document.getElementById('photoPreview');
+  preview.innerHTML = `<div class="photo-uploading">Uploading…</div>`;
+
+  if(usingDemoDataOrg){
+    const url = URL.createObjectURL(file);
+    document.getElementById('o_photo_url').value = url;
+    preview.innerHTML = `<img src="${url}" class="person-avatar" style="width:64px;height:64px;">`;
+    return;
+  }
+
+  try{
+    const formData = new FormData();
+    formData.append('photo', file);
+    const res = await fetch(`${CONFIG.API_BASE}/org/photo`, { method:'POST', body: formData });
+    const data = await res.json();
+    if(data.url){
+      document.getElementById('o_photo_url').value = data.url;
+      preview.innerHTML = `<img src="${data.url}" class="person-avatar" style="width:64px;height:64px;">`;
+    } else {
+      preview.innerHTML = `<div class="empty-hint" style="padding:0;">Upload failed</div>`;
+    }
+  }catch(e){
+    preview.innerHTML = `<div class="empty-hint" style="padding:0;">Upload failed</div>`;
+  }
+}
+
+function clearOrgPhoto(){
+  document.getElementById('o_photo_url').value = '';
+  document.getElementById('photoPreview').innerHTML = personAvatarHTML({
+    name: document.getElementById('o_name').value,
+    department: document.getElementById('o_department').value,
+  }, 64);
+}
+
+async function saveOrgRow(){
+  const payload = {
+    name: document.getElementById('o_name').value.trim() || 'To Be Determined',
+    title: document.getElementById('o_title').value.trim(),
+    department: document.getElementById('o_department').value,
+    reports_to: document.getElementById('o_reports_to').value || null,
+    employee_number: type_or_null(document.getElementById('o_employee_number').value),
+    tech_number: type_or_null(document.getElementById('o_tech_number').value),
+    schedule: type_or_null(document.getElementById('o_schedule').value),
+    photo_url: type_or_null(document.getElementById('o_photo_url').value),
+    is_tbd: document.getElementById('o_is_tbd').checked,
+  };
+  if(!payload.title || !payload.department){
+    alert('Title and department are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(orgRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataOrg){
+      try{ await fetch(`${CONFIG.API_BASE}/org/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (orgRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    orgRows.push(newRow);
+    if(!usingDemoDataOrg){
+      try{ await fetch(`${CONFIG.API_BASE}/org`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteOrgRow(id){
+  if(!confirm('Delete this employee? Anyone reporting to them will move to the top level. This can\'t be undone.')) return;
+  orgRows = orgRows.filter(r => r.id !== id);
+  orgRows.forEach(r => { if(r.reports_to === id) r.reports_to = null; });
+  if(!usingDemoDataOrg){
+    try{ await fetch(`${CONFIG.API_BASE}/org/${id}`, {method:'DELETE'}); }catch(e){}
   }
   render();
 }
