@@ -103,6 +103,18 @@
   mark.search-hit{background:#FFD54A; color:#1A1A1A; border-radius:2px; padding:0 1px;}
   mark.search-hit.current{background:var(--brick); color:#fff;}
 
+  /* ---------- labor rates ---------- */
+  .rate-cards{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px;}
+  .rate-card{flex:1; min-width:210px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px;}
+  .rate-amount{font-family:var(--display); font-weight:700; font-size:28px; color:var(--brick);}
+  .rate-per-hr{font-size:14px; font-weight:500; color:var(--ink-faint); margin-left:2px;}
+  .rate-name{font-size:13px; font-weight:600; color:var(--ink); margin-top:4px;}
+  .rate-note{font-size:11.5px; color:var(--ink-faint); margin-top:4px; line-height:1.4;}
+  .rate-disclaimer{
+    background:var(--amber-light); border:1px solid #5C441C; color:var(--amber);
+    padding:10px 14px; border-radius:var(--radius); font-size:12.5px; margin-bottom:24px;
+  }
+
   /* ---------- table ---------- */
   .table-wrap{background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden;}
   table{width:100%; border-collapse:collapse;}
@@ -429,6 +441,7 @@ function icon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 
 let currentPage = 'pricing';
 let usingDemoData = false;
+let usingDemoDataLaborRates = false;
 let usingDemoDataMM = false;
 let usingDemoDataVendors = false;
 let usingDemoDataOilGuide = false;
@@ -443,6 +456,7 @@ let usingDemoDataOrg = false;
 let usingDemoDataRotationPattern = false;
 let usingDemoDataRotationAnchor = false;
 let pricingRows = [];
+let laborRateRows = [];
 let mmRows = [];
 let vendorRows = [];
 let engineOilRows = [];
@@ -463,6 +477,7 @@ let editingTable = 'pricing';
 let editingVendorId = null;
 let editingSubprocessId = null;
 let settingsTab = 'pricing';
+let pricingSettingsSubTab = 'pricing';
 let oilSettingsSubTab = 'engine';
 let orgSettingsSubTab = 'roster';
 let processSettingsSubTab = 'lifecycle';
@@ -519,6 +534,19 @@ async function loadPricing(){
     usingDemoData = true;
   }
   pricingRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadLaborRates(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/laborrates`);
+    if(!res.ok) throw new Error('bad response');
+    laborRateRows = await res.json();
+    usingDemoDataLaborRates = false;
+  }catch(err){
+    laborRateRows = JSON.parse(JSON.stringify(SEED_DATA_LABORRATES));
+    usingDemoDataLaborRates = true;
+  }
+  laborRateRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
 async function loadMMCodes(){
@@ -745,6 +773,7 @@ function pricingTableHTML(editable){
 
 const TABLE_ACTIONS = {
   pricing:      { edit: 'openEdit',           delete: 'deleteRow' },
+  laborrates:   { edit: 'openLaborRateEdit',  delete: 'deleteLaborRateRow' },
   mmcodes:      { edit: 'openMMEdit',         delete: 'deleteMMRow' },
   vendor:       { edit: 'openVendorEdit',     delete: 'deleteVendorRow' },
   oilguide:     { edit: 'openOilEdit',        delete: 'deleteOilRow' },
@@ -776,6 +805,16 @@ function demoBanner(isDemo, endpointPath){
    PAGE: Pricing Guide
    ================================================================ */
 
+function laborRatesHTML(){
+  const cards = laborRateRows.map(r => `<div class="rate-card">
+    <div class="rate-amount">${fmtMoney(r.rate_amount)}<span class="rate-per-hr">/hr</span></div>
+    <div class="rate-name">${escapeHtml(r.rate_name)}</div>
+    ${r.notes ? `<div class="rate-note">${escapeHtml(r.notes)}</div>` : ''}
+  </div>`).join('');
+  return `<div class="rate-cards">${cards}</div>
+  <div class="rate-disclaimer">Everything listed on this page is an exception to the posted labor rates above — if it isn't here, it bills at the applicable rate.</div>`;
+}
+
 function renderPricingPage(){
   return `
     <div class="topbar">
@@ -784,6 +823,9 @@ function renderPricingPage(){
         <div class="desc">Labor, parts, and total pricing for every standard service operation.</div>
       </div>
     </div>
+    ${demoBanner(usingDemoDataLaborRates, 'laborrates')}
+    <div class="section-label">Posted labor rates</div>
+    ${laborRatesHTML()}
     ${demoBanner(usingDemoData, 'pricing')}
     ${pricingTableHTML(false)}
   `;
@@ -1492,6 +1534,8 @@ function renderSettingsPage(){
   if(settingsTab === 'schedule'){
     return renderScheduleSettings();
   }
+  // default: Pricing Guide settings, with a Labor Rates sub-tab
+  const isPricingSub = pricingSettingsSubTab !== 'laborrates';
   return `
     <div class="topbar">
       <div>
@@ -1499,13 +1543,36 @@ function renderSettingsPage(){
         <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+        <button class="btn btn-primary" onclick="${isPricingSub ? 'openAdd' : 'openLaborRateAdd'}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add ${isPricingSub ? 'row' : 'rate'}</button>
       </div>
     </div>
     ${settingsTabsHTML()}
-    ${demoBanner(usingDemoData, 'pricing')}
-    ${pricingTableHTML(true)}
+    <div class="settings-tabs settings-tabs-sub">
+      <button class="settings-tab${isPricingSub ? ' active' : ''}" onclick="switchPricingSettingsSubTab('pricing')">Pricing Guide</button>
+      <button class="settings-tab${!isPricingSub ? ' active' : ''}" onclick="switchPricingSettingsSubTab('laborrates')">Labor Rates</button>
+    </div>
+    ${isPricingSub
+      ? demoBanner(usingDemoData, 'pricing') + pricingTableHTML(true)
+      : demoBanner(usingDemoDataLaborRates, 'laborrates') + laborRatesSettingsTableHTML()}
   `;
+}
+
+function switchPricingSettingsSubTab(tab){
+  pricingSettingsSubTab = tab;
+  render();
+}
+
+function laborRatesSettingsTableHTML(){
+  const rowsHtml = laborRateRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.rate_name)}</td>
+    <td class="num total">${fmtMoney(r.rate_amount)}/hr</td>
+    <td>${r.notes ? escapeHtml(r.notes) : ''}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'laborrates')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Rate name</th><th class="num" style="width:100px">Amount</th><th>Notes</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No rates yet.</td></tr>`}</tbody>
+  </table></div>`;
 }
 
 function switchSettingsTab(tab){
@@ -1900,6 +1967,7 @@ async function render(){
   searchIndex = -1;
   if(currentPage === 'pricing'){
     if(pricingRows.length === 0) await loadPricing();
+    if(laborRateRows.length === 0) await loadLaborRates();
     main.innerHTML = renderPricingPage();
   } else if(currentPage === 'mmcodes'){
     if(mmRows.length === 0) await loadMMCodes();
@@ -1929,6 +1997,7 @@ async function render(){
     main.innerHTML = renderSchedulePage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
+    if(laborRateRows.length === 0) await loadLaborRates();
     if(mmRows.length === 0) await loadMMCodes();
     if(vendorRows.length === 0) await loadVendors();
     if(engineOilRows.length === 0) await loadEngineOil();
@@ -2187,6 +2256,7 @@ function handleModalSave(){
   else if(editingTable === 'rorules') saveRuleRow();
   else if(editingTable === 'org') saveOrgRow();
   else if(editingTable === 'rotationpattern') saveRotationPatternRow();
+  else if(editingTable === 'laborrates') saveLaborRateRow();
   else saveRow();
 }
 
@@ -3433,6 +3503,88 @@ async function saveRotationAnchor(){
   render();
 }
 
+/* ---------- Labor Rates CRUD ---------- */
+function emptyLaborRate(){
+  return { rate_name:'', rate_amount:'', notes:'' };
+}
+
+function openLaborRateAdd(){
+  editingId = null;
+  editingTable = 'laborrates';
+  document.getElementById('modalTitle').textContent = 'Add labor rate';
+  document.getElementById('modalBody').innerHTML = laborRateModalFormHTML(emptyLaborRate());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openLaborRateEdit(id){
+  const row = laborRateRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'laborrates';
+  document.getElementById('modalTitle').textContent = 'Edit labor rate';
+  document.getElementById('modalBody').innerHTML = laborRateModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function laborRateModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Rate name</label>
+        <input type="text" id="lr_rate_name" value="${escapeAttr(r.rate_name)}" placeholder="e.g. ICE (Gas) Repair Labor Rate">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Amount per hour</label>
+        <input type="number" step="0.01" id="lr_rate_amount" value="${r.rate_amount ?? ''}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Notes</label>
+        <input type="text" id="lr_notes" value="${escapeAttr(r.notes)}" placeholder="Optional">
+      </div>
+    </div>
+  `;
+}
+
+async function saveLaborRateRow(){
+  const payload = {
+    rate_name: document.getElementById('lr_rate_name').value.trim(),
+    rate_amount: numOrNull(document.getElementById('lr_rate_amount').value),
+    notes: type_or_null(document.getElementById('lr_notes').value),
+  };
+  if(!payload.rate_name || payload.rate_amount === null){
+    alert('Rate name and amount are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(laborRateRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataLaborRates){
+      try{ await fetch(`${CONFIG.API_BASE}/laborrates/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (laborRateRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    laborRateRows.push(newRow);
+    if(!usingDemoDataLaborRates){
+      try{ await fetch(`${CONFIG.API_BASE}/laborrates`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteLaborRateRow(id){
+  if(!confirm('Delete this rate? This can\'t be undone.')) return;
+  laborRateRows = laborRateRows.filter(r => r.id !== id);
+  if(!usingDemoDataLaborRates){
+    try{ await fetch(`${CONFIG.API_BASE}/laborrates/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
 function modalFormHTML(r){
   return `
     <div class="field-row">
@@ -3587,6 +3739,7 @@ function escapeAttr(s){ return escapeHtml(s); }
    INIT
    ================================================================ */
 const SEED_DATA = [{"id": "seed-10","sort_order": 10,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 0W20 4CYL","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-20","sort_order": 20,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 0W20 6CYL","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 87.5},{"id": "seed-30","sort_order": 30,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION 5W20","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-40","sort_order": 40,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 5W30","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-50","sort_order": 50,"row_type": "item","timing_type": null,"mm_code": "1","description": "TIRE ROTATION","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 15},{"id": "seed-60","sort_order": 60,"row_type": "item","timing_type": null,"mm_code": "2","description": "AIR & CABIN AIR FILTER","labor_hours": 0.4,"labor_price": 30,"labor_rate": 75,"total_parts": 63,"price_out": false,"total_price": 93},{"id": "seed-70","sort_order": 70,"row_type": "item","timing_type": null,"mm_code": null,"description": "ENGINE AIR FILTER","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": 35,"price_out": false,"total_price": 50},{"id": "seed-80","sort_order": 80,"row_type": "item","timing_type": null,"mm_code": null,"description": "CABIN AIR FILTER","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": 28,"price_out": false,"total_price": 43},{"id": "seed-90","sort_order": 90,"row_type": "item","timing_type": null,"mm_code": "3","description": "MANUAL TRANS SERVICE","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 20,"price_out": false,"total_price": 107.5},{"id": "seed-100","sort_order": 100,"row_type": "item","timing_type": null,"mm_code": "3","description": "ATF-DW1 TRANS SERV. 2WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 50,"price_out": false,"total_price": 137.5},{"id": "seed-110","sort_order": 110,"row_type": "item","timing_type": null,"mm_code": "3","description": "ATF-DW1 TRANS SERV. 4WD","labor_hours": 1,"labor_price": 125,"labor_rate": 125,"total_parts": 50,"price_out": false,"total_price": 175},{"id": "seed-120","sort_order": 120,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT TRANS SERV. OLDER HYBRIDS","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 40,"price_out": false,"total_price": 127.5},{"id": "seed-130","sort_order": 130,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT HCF2 TRANS SERV. 2WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 70,"price_out": false,"total_price": 157.5},{"id": "seed-140","sort_order": 140,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT HCF2 TRANS SERV. 4WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 120,"price_out": false,"total_price": 207.5},{"id": "seed-150","sort_order": 150,"row_type": "item","timing_type": null,"mm_code": "3","description": "10 SPEED TRANS SERV.","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 140,"price_out": false,"total_price": 327.5},{"id": "seed-160","sort_order": 160,"row_type": "item","timing_type": null,"mm_code": "3","description": "9 SPEED TRANSMISSION SERV. 2WD","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 250,"price_out": false,"total_price": 437.5},{"id": "seed-170","sort_order": 170,"row_type": "item","timing_type": null,"mm_code": "3","description": "9 SPEED TRANSMISSION SERV,4WD","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 250,"price_out": false,"total_price": 437.5},{"id": "seed-180","sort_order": 180,"row_type": "header","description": "Timing Type"},{"id": "seed-190","sort_order": 190,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 07-08 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 196.15,"price_out": false,"total_price": 756.15},{"id": "seed-200","sort_order": 200,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 09-13 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 194.81,"price_out": false,"total_price": 754.81},{"id": "seed-210","sort_order": 210,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 15-20 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 248.41,"price_out": false,"total_price": 808.41},{"id": "seed-220","sort_order": 220,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CR-Z 11-16 1.5L","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 270.32,"price_out": false,"total_price": 760.32},{"id": "seed-230","sort_order": 230,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 00-06 1.5L","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 366.06,"price_out": false,"total_price": 856.06},{"id": "seed-240","sort_order": 240,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 10-11 1.5L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 297.94,"price_out": false,"total_price": 927.94},{"id": "seed-250","sort_order": 250,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 12-14 1.3L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 423.78,"price_out": false,"total_price": 1053.78},{"id": "seed-260","sort_order": 260,"row_type": "item","timing_type": null,"mm_code": "4","description": "INSIGHT 19-21 1.5L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 182.62,"price_out": false,"total_price": 602.62},{"id": "seed-270","sort_order": 270,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 03-05 1.3L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 262.8,"price_out": false,"total_price": 682.8},{"id": "seed-280","sort_order": 280,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 06-11 1.3L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 278.4,"price_out": false,"total_price": 698.4},{"id": "seed-290","sort_order": 290,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 12-15 1.5L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 430.13,"price_out": false,"total_price": 780.13},{"id": "seed-300","sort_order": 300,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC/CRX/DEL S 80-95 1.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 322.27,"price_out": false,"total_price": 1232.27},{"id": "seed-310","sort_order": 310,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 90-00 1.6L ","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 297.57,"price_out": false,"total_price": 1137.57},{"id": "seed-320","sort_order": 320,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 01-05 1.7L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 364.1,"price_out": false,"total_price": 1204.1},{"id": "seed-330","sort_order": 330,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 06-11 1.8L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 193,"price_out": false,"total_price": 613},{"id": "seed-340","sort_order": 340,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 12-15 1.8L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 178.08,"price_out": false,"total_price": 528.08},{"id": "seed-350","sort_order": 350,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 16-21 2.0L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 162.82,"price_out": false,"total_price": 722.82},{"id": "seed-360","sort_order": 360,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 16-23 1.5T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 207.24,"price_out": false,"total_price": 627.24},{"id": "seed-370","sort_order": 370,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC SI 02-05 2.0L","labor_hours": 8,"labor_price": 1120,"labor_rate": 140,"total_parts": 482.58,"price_out": false,"total_price": 1602.58},{"id": "seed-380","sort_order": 380,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI 06-11 2.0L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 151.5,"price_out": false,"total_price": 711.5},{"id": "seed-390","sort_order": 390,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI 12-15 2.4L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 182.41,"price_out": false,"total_price": 742.41},{"id": "seed-400","sort_order": 400,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI TURBO 16-20 2.4T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 219.1,"price_out": false,"total_price": 639.1},{"id": "seed-410","sort_order": 410,"row_type": "item","timing_type": null,"mm_code": "4","description": "S2000 00-09 2.0L-2.2L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 517.99,"price_out": false,"total_price": 1147.99},{"id": "seed-420","sort_order": 420,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID V6 05-07 3.0L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 751.17,"price_out": false,"total_price": 1661.17},{"id": "seed-430","sort_order": 430,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID 14-17 2.0L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 187.09,"price_out": false,"total_price": 537.09},{"id": "seed-440","sort_order": 440,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID 18-21 2.0L ","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 274.7,"price_out": false,"total_price": 624.7},{"id": "seed-450","sort_order": 450,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 90-97/ PRELUDE 92-01 2.2L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 490.94,"price_out": false,"total_price": 1400.94},{"id": "seed-460","sort_order": 460,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 98-02 / PRELUDE 92-96 2.3L","labor_hours": 7,"labor_price": 980,"labor_rate": 140,"total_parts": 583.16,"price_out": false,"total_price": 1563.16},{"id": "seed-470","sort_order": 470,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "ACCORD 03-07 2.4L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 193.58,"price_out": false,"total_price": 543.58},{"id": "seed-480","sort_order": 480,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 08-12 2.4L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 257.96,"price_out": false,"total_price": 607.96},{"id": "seed-490","sort_order": 490,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 13-17 2.4L ","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 167.78,"price_out": false,"total_price": 517.78},{"id": "seed-500","sort_order": 500,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 18-21 1.5T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 248.94,"price_out": false,"total_price": 668.94},{"id": "seed-510","sort_order": 510,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 95-97 2.7L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 372.74,"price_out": false,"total_price": 1212.74},{"id": "seed-520","sort_order": 520,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 98-02 3.0L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 755.71,"price_out": false,"total_price": 1595.71},{"id": "seed-530","sort_order": 530,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 03-05 3.0L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 759.3,"price_out": false,"total_price": 1599.3},{"id": "seed-540","sort_order": 540,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 06-07 3.0L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 759.3,"price_out": false,"total_price": 1669.3},{"id": "seed-550","sort_order": 550,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 08-17 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 887.35,"price_out": false,"total_price": 1797.35},{"id": "seed-560","sort_order": 560,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD TURBO 18-21 2.0T","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 248.94,"price_out": false,"total_price": 878.94},{"id": "seed-570","sort_order": 570,"row_type": "item","timing_type": null,"mm_code": "4","description": "CROSSTOUR 12-15 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 180.05,"price_out": false,"total_price": 600.05},{"id": "seed-580","sort_order": 580,"row_type": "item","timing_type": null,"mm_code": "4","description": "CROSSTOUR 10-15 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 796.03,"price_out": false,"total_price": 1706.03},{"id": "seed-590","sort_order": 590,"row_type": "item","timing_type": null,"mm_code": "4","description": "HR-V 16-21 1.8L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 183.27,"price_out": false,"total_price": 603.27},{"id": "seed-600","sort_order": 600,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 97-01 2.0L","labor_hours": 5,"labor_price": 700,"labor_rate": 140,"total_parts": 604.06,"price_out": false,"total_price": 1304.06},{"id": "seed-610","sort_order": 610,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 02-06 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 234.98,"price_out": false,"total_price": 654.98},{"id": "seed-620","sort_order": 620,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 07-09 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 225.06,"price_out": false,"total_price": 645.06},{"id": "seed-630","sort_order": 630,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 10-11 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 209.64,"price_out": false,"total_price": 629.64},{"id": "seed-640","sort_order": 640,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 12-14 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 169.23,"price_out": false,"total_price": 799.23},{"id": "seed-650","sort_order": 650,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 15-16 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 166.75,"price_out": false,"total_price": 796.75},{"id": "seed-660","sort_order": 660,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 17-19 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 167.78,"price_out": false,"total_price": 797.78},{"id": "seed-670","sort_order": 670,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 17-21 1.5T ","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 223.76,"price_out": false,"total_price": 713.76},{"id": "seed-680","sort_order": 680,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "ELEMENT 03-11 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 193.98,"price_out": false,"total_price": 613.98},{"id": "seed-690","sort_order": 690,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 03-04 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 749.78,"price_out": false,"total_price": 1659.78},{"id": "seed-700","sort_order": 700,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 05-08 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 778.2,"price_out": false,"total_price": 1688.2},{"id": "seed-710","sort_order": 710,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 09-11 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-720","sort_order": 720,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 12-15 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 794.7,"price_out": false,"total_price": 1704.7},{"id": "seed-730","sort_order": 730,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT-PASSPORT 16-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-740","sort_order": 740,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 06-08 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 778.2,"price_out": false,"total_price": 1688.2},{"id": "seed-750","sort_order": 750,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 09-14 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-760","sort_order": 760,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 17-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-770","sort_order": 770,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 95-97 2.2L","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 382.84,"price_out": false,"total_price": 1152.84},{"id": "seed-780","sort_order": 780,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 98 2.3L ","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 369.7,"price_out": false,"total_price": 1139.7},{"id": "seed-790","sort_order": 790,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 99-04 3.5L","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 612.53,"price_out": false,"total_price": 1382.53},{"id": "seed-800","sort_order": 800,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 05-10 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-810","sort_order": 810,"row_type": "item","timing_type": "BELT","mm_code": "4","description": "ODYSSEY 11-17 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 794.7,"price_out": false,"total_price": 1704.7},{"id": "seed-820","sort_order": 820,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 18-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-830","sort_order": 830,"row_type": "item","timing_type": null,"mm_code": "5","description": "COOLANT FLUID EXHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 25,"price_out": false,"total_price": 125},{"id": "seed-840","sort_order": 840,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. DPSF2","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 27.28,"price_out": false,"total_price": 127.28},{"id": "seed-850","sort_order": 850,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. VTM4","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 39,"price_out": false,"total_price": 139},{"id": "seed-860","sort_order": 860,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. S2000","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 12.1,"price_out": false,"total_price": 112.1},{"id": "seed-870","sort_order": 870,"row_type": "item","timing_type": null,"mm_code": "7","description": "BRAKE FLUID EXCHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 14,"price_out": false,"total_price": 114},{"id": "seed-880","sort_order": 880,"row_type": "item","timing_type": null,"mm_code": null,"description": "POWER STEERING FLUID EXCHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 15,"price_out": false,"total_price": 115},{"id": "seed-890","sort_order": 890,"row_type": "item","timing_type": null,"mm_code": null,"description": "CLUTCH FLUID EXCHANGE (MANUAL TRANS ONLY)","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 13.26,"price_out": false,"total_price": 113.26},{"id": "seed-900","sort_order": 900,"row_type": "item","timing_type": null,"mm_code": "WIPERS","description": "WIPER INSERTS (PAIR)","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 15,"price_out": false,"total_price": 22.5},{"id": "seed-910","sort_order": 910,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR WIPER INSERT","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 7.5,"price_out": false,"total_price": 15},{"id": "seed-920","sort_order": 920,"row_type": "item","timing_type": null,"mm_code": null,"description": "WIPER BLADES (PAIR)","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 57.5},{"id": "seed-930","sort_order": 930,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR WIPER BLADE","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 25,"price_out": false,"total_price": 32.5},{"id": "seed-940","sort_order": 940,"row_type": "item","timing_type": null,"mm_code": "BULBS","description": "STANDARD HEADLIGHT BULB","labor_hours": 0.1,"labor_price": 5,"labor_rate": 50,"total_parts": 18,"price_out": false,"total_price": 23},{"id": "seed-950","sort_order": 950,"row_type": "item","timing_type": null,"mm_code": "BATTERIES","description": "151R    31500-SNC-00100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 140.64,"price_out": false,"total_price": 163.14},{"id": "seed-960","sort_order": 960,"row_type": "item","timing_type": null,"mm_code": null,"description": "24F      31500-TK8-A2100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 155.39,"price_out": false,"total_price": 177.89},{"id": "seed-970","sort_order": 970,"row_type": "item","timing_type": null,"mm_code": null,"description": "35             31500-SL5-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 145.05,"price_out": false,"total_price": 167.55},{"id": "seed-980","sort_order": 980,"row_type": "item","timing_type": null,"mm_code": null,"description": "51            31500-SB2-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 148.93,"price_out": false,"total_price": 171.43},{"id": "seed-990","sort_order": 990,"row_type": "item","timing_type": null,"mm_code": null,"description": "51R          31500-SR1-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 146.37,"price_out": false,"total_price": 168.87},{"id": "seed-1000","sort_order": 1000,"row_type": "item","timing_type": null,"mm_code": null,"description": "H5     31500-TLA-EFB100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 298.78,"price_out": false,"total_price": 321.28},{"id": "seed-1010","sort_order": 1010,"row_type": "item","timing_type": null,"mm_code": null,"description": "H5           31500-TGG-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 202.17,"price_out": false,"total_price": 224.67},{"id": "seed-1020","sort_order": 1020,"row_type": "item","timing_type": null,"mm_code": null,"description": "H6            31500-TZ3-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 202.32,"price_out": false,"total_price": 224.82},{"id": "seed-1030","sort_order": 1030,"row_type": "item","timing_type": null,"mm_code": null,"description": "H6    31500-TZ7-AGM100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 272.4,"price_out": false,"total_price": 294.9},{"id": "seed-1040","sort_order": 1040,"row_type": "item","timing_type": null,"mm_code": null,"description": "BATTERY SERVICE (CLEANING & PROTECTANT)","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 5,"price_out": false,"total_price": 27.5},{"id": "seed-1050","sort_order": 1050,"row_type": "item","timing_type": null,"mm_code": "TIRES","description": "MOUNT & BALANCE 1 ","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1060","sort_order": 1060,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 2","labor_hours": 0.6,"labor_price": 45,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1070","sort_order": 1070,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 3 ","labor_hours": 0.9,"labor_price": 67.5,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1080","sort_order": 1080,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 4","labor_hours": 1.2,"labor_price": 90,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1090","sort_order": 1090,"row_type": "item","timing_type": null,"mm_code": null,"description": "ALIGNMENT","labor_hours": 1.2,"labor_price": 120,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 120},{"id": "seed-1100","sort_order": 1100,"row_type": "item","timing_type": null,"mm_code": null,"description": "ROAD FORCE BALANCE TIRES","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 37.5},{"id": "seed-1110","sort_order": 1110,"row_type": "item","timing_type": null,"mm_code": null,"description": "1 TIRE REPAIR + BALANCE","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 22.5},{"id": "seed-1120","sort_order": 1120,"row_type": "item","timing_type": null,"mm_code": null,"description": "1 TIRE PRESSURE SENSOR + BALANCE","labor_hours": 0.6,"labor_price": 45,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 95},{"id": "seed-1130","sort_order": 1130,"row_type": "item","timing_type": null,"mm_code": null,"description": "DIAGNOSTIC - TPMS SYSTEM","labor_hours": 0.5,"labor_price": 50,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 50},{"id": "seed-1140","sort_order": 1140,"row_type": "item","timing_type": null,"mm_code": "BRAKES","description": "FRONT BRAKE PADS - MACHINE ROTORS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 65,"price_out": false,"total_price": 315},{"id": "seed-1150","sort_order": 1150,"row_type": "item","timing_type": null,"mm_code": null,"description": "FRONT BRAKE PADS - REPLACE ROTORS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 116,"price_out": false,"total_price": 303.5},{"id": "seed-1160","sort_order": 1160,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE PADS - MACHINE ROTORS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 65,"price_out": false,"total_price": 315},{"id": "seed-1170","sort_order": 1170,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE PADS - REPLACE ROTORS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 92,"price_out": false,"total_price": 279.5},{"id": "seed-1180","sort_order": 1180,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE DRUMS - MACHINE DRUMS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 85,"price_out": false,"total_price": 335},{"id": "seed-1190","sort_order": 1190,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE DRUMS - REPLACE DRUMS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 316,"price_out": false,"total_price": 503.5},{"id": "seed-1200","sort_order": 1200,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKES DRUMS - CLEAN & ADJUST","labor_hours": 0.5,"labor_price": 62.5,"labor_rate": 125,"total_parts": null,"price_out": false,"total_price": 62.5},{"id": "seed-1210","sort_order": 1210,"row_type": "item","timing_type": null,"mm_code": null,"description": "HONDA SERVICE PASS (B1)","labor_hours": 0.6,"labor_price": null,"labor_rate": 0,"total_parts": null,"price_out": false,"total_price": 0},{"id": "seed-1220","sort_order": 1220,"row_type": "item","timing_type": null,"mm_code": "DIAGNOSTICS","description": "DIAGNOSTIC - CHECK ENGINE","labor_hours": 1,"labor_price": 100,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 100},{"id": "seed-1230","sort_order": 1230,"row_type": "item","timing_type": null,"mm_code": null,"description": "DIAGNOSTIC - A/C SYSTEM","labor_hours": 1.5,"labor_price": 150,"labor_rate": 100,"total_parts": 100,"price_out": false,"total_price": 250},{"id": "seed-1240","sort_order": 1240,"row_type": "item","timing_type": null,"mm_code": "KEYS","description": "PROGRAMMING KEYS OR FOBS","labor_hours": 0.5,"labor_price": 75,"labor_rate": 150,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1250","sort_order": 1250,"row_type": "item","timing_type": null,"mm_code": "WARRANTY","description": "AMERICAN HONDA WARRANTY","labor_hours": null,"labor_price": null,"labor_rate": 115,"total_parts": null,"price_out": false,"total_price": 0},{"id": "seed-1260","sort_order": 1260,"row_type": "item","timing_type": null,"mm_code": "INTERNAL","description": "PDI (NEW CAR PRE-DELIVERY INSPECTION)","labor_hours": 1.4,"labor_price": 161,"labor_rate": 115,"total_parts": null,"price_out": false,"total_price": 161},{"id": "seed-1270","sort_order": 1270,"row_type": "item","timing_type": null,"mm_code": null,"description": "UCI (USED VEHICLE INSPECTION)","labor_hours": 1.5,"labor_price": 240,"labor_rate": 160,"total_parts": null,"price_out": false,"total_price": 240},{"id": "seed-1280","sort_order": 1280,"row_type": "item","timing_type": null,"mm_code": null,"description": "HONDA CERTIFIED UCI (USED VEHICLE INSPECTION)","labor_hours": 2,"labor_price": 320,"labor_rate": 160,"total_parts": null,"price_out": false,"total_price": 320},{"id": "seed-1290","sort_order": 1290,"row_type": "note","mm_code": "SHOP SUPPLIES","description": "8% of total Parts + Labor per RO. Minimum of $3.00 per RO, maximum of $25.00 per RO"},{"id": "seed-1300","sort_order": 1300,"row_type": "note","mm_code": "EMPLOYEE PRICING","description": "$60.00 Hourly Labor Rate, 10% over cost for Parts, 10% over cost Sublet(Idens, etc.), No Shop Supplies Fee."},{"id": "seed-1310","sort_order": 1310,"row_type": "note","mm_code": null,"description": "ONLY technicians performing their own labor get to waive labor charges."},{"id": "seed-1320","sort_order": 1320,"row_type": "note","mm_code": null,"description": "Employee rates apply to employees & their direct family members(parents, siblings, children, & their companions. Excludes cousins)"}];
+const SEED_DATA_LABORRATES = [{"id": "lrseed-10", "sort_order": 10, "rate_name": "ICE (Gas) Repair Labor Rate", "rate_amount": 190.0, "notes": "Posted customer-pay rate for gas-engine vehicles"}, {"id": "lrseed-20", "sort_order": 20, "rate_name": "Hybrid & EV Repair Labor Rate", "rate_amount": 120.0, "notes": "Posted customer-pay rate for hybrid and electric vehicles"}, {"id": "lrseed-30", "sort_order": 30, "rate_name": "Honda Warranty Labor Rate", "rate_amount": 179.71, "notes": null}];
 
 const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main", "code_label": "A or B", "description": "Replace Engine Oil & Oil Filter.", "time_estimate": null}, {"id": "mmseed-20", "sort_order": 20, "code_type": "checklist", "code_label": null, "description": "Check front and rear brakes. Check brake pads and disc thickness. Check for damage. Check calipers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-30", "sort_order": 30, "code_type": "checklist", "code_label": null, "description": "Check Parking Brake Adjustment.", "time_estimate": null}, {"id": "mmseed-40", "sort_order": 40, "code_type": "checklist", "code_label": null, "description": "Inspect Tie-Rod Ends, Steering Gearbox & Gearbox Boots.", "time_estimate": null}, {"id": "mmseed-50", "sort_order": 50, "code_type": "checklist", "code_label": null, "description": "Check steering linkage.", "time_estimate": null}, {"id": "mmseed-60", "sort_order": 60, "code_type": "checklist", "code_label": null, "description": "Check Boots for Damage and Leaking Grease.", "time_estimate": null}, {"id": "mmseed-70", "sort_order": 70, "code_type": "checklist", "code_label": null, "description": "Inspect Suspension Components.", "time_estimate": null}, {"id": "mmseed-80", "sort_order": 80, "code_type": "checklist", "code_label": null, "description": "Check Condition of Ball Joint Boots for Deterioration, Damage & Tightness.", "time_estimate": null}, {"id": "mmseed-90", "sort_order": 90, "code_type": "checklist", "code_label": null, "description": "Inspect Driveshaft Boots.", "time_estimate": null}, {"id": "mmseed-100", "sort_order": 100, "code_type": "checklist", "code_label": null, "description": "Inspect Brake Hoses & Lines, Including VSA Lines.", "time_estimate": null}, {"id": "mmseed-110", "sort_order": 110, "code_type": "checklist", "code_label": null, "description": "Check Brake Master Cylinder & VSA Modulator-Control Unit for Damage or Leakage.", "time_estimate": null}, {"id": "mmseed-120", "sort_order": 120, "code_type": "checklist", "code_label": null, "description": "Inspect All Fluid Levels & Condition of Fluids. Including: Engine Coolant, Brake Fluid, Windshield Washer Fluid, Power Steering Fluid(if applicable).", "time_estimate": null}, {"id": "mmseed-130", "sort_order": 130, "code_type": "checklist", "code_label": null, "description": "Check catalytic converter heat shields. Check Exhaust Pipes. Check mufflers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-140", "sort_order": 140, "code_type": "checklist", "code_label": null, "description": "Inspect Fuel Lines & Connections.", "time_estimate": null}, {"id": "mmseed-150", "sort_order": 150, "code_type": "checklist", "code_label": null, "description": "Inspect Engine Air Cleaner Filter.", "time_estimate": null}, {"id": "mmseed-160", "sort_order": 160, "code_type": "checklist", "code_label": null, "description": "Inspect Cabin(HVAC) Filter.", "time_estimate": null}, {"id": "mmseed-1010", "sort_order": 1010, "code_type": "sub", "code_label": "1.0", "description": "Rotate Tires(if needed), Check Tire Inflation & Condition.", "time_estimate": "45 MINS - 1 HR"}, {"id": "mmseed-1020", "sort_order": 1020, "code_type": "sub", "code_label": "2.0", "description": "Replace Engine Air Cleaner Filter, Replace Cabin(HVAC) Filter.", "time_estimate": "N/A Replace on as-need basis (Inspection of filters included in A or B services)"}, {"id": "mmseed-1030", "sort_order": 1030, "code_type": "sub", "code_label": "3.0", "description": "Replace Transmission Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1040", "sort_order": 1040, "code_type": "sub", "code_label": "4.0", "description": "Replace Engine Spark Plugs, Replace Engine Valve Cover Gasket, Adjust Engine Valves, Replace Water Pump. For Vehicles Equipped with Timing Belt Add: Replace Timing Belt & Timing Belt Tensioner.", "time_estimate": "NEED CAR ALL DAY. Always confirm parts in-stock prior to customer arrival."}, {"id": "mmseed-1050", "sort_order": 1050, "code_type": "sub", "code_label": "5.0", "description": "Replace Engine Coolant.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1060", "sort_order": 1060, "code_type": "sub", "code_label": "6.0", "description": "Replace Rear Differential Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1070", "sort_order": 1070, "code_type": "sub", "code_label": "7.0", "description": "Replace Brake Fluid.", "time_estimate": "ADD 1 HR"}];
 
