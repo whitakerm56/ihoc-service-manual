@@ -132,6 +132,39 @@
 
   .empty-hint{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:13px;}
 
+  /* ---------- maintenance minder page ---------- */
+  .mm-explainer{
+    background:var(--steel-light); color:var(--ink); border:1px solid var(--border); border-radius:var(--radius);
+    padding:12px 16px; font-size:13px; line-height:1.55; margin-bottom:22px;
+  }
+  .mm-explainer strong{color:var(--steel); font-weight:600;}
+  .section-label{
+    font-family:var(--display); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--ink-faint); margin:0 0 10px;
+  }
+  .mm-main-card{padding:18px 20px 20px; margin-bottom:26px;}
+  .mm-main-head{display:flex; align-items:flex-start; gap:14px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border);}
+  .mm-letter-chip{font-family:var(--display); font-size:15px; font-weight:600; padding:5px 12px; flex-shrink:0; background:var(--brick-light); border-color:transparent; color:var(--brick-dark);}
+  .mm-main-title{font-weight:600; font-size:15px; margin-bottom:2px;}
+  .mm-main-sub{color:var(--ink-soft); font-size:12.5px;}
+  .mm-checklist-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 20px;}
+  .mm-checklist-item{display:flex; align-items:flex-start; gap:9px; font-size:13px; color:var(--ink-soft); line-height:1.45;}
+  .mm-checklist-item svg{width:15px; height:15px; margin-top:2px; color:var(--steel); flex-shrink:0;}
+  .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
+
+  /* ---------- settings tabs ---------- */
+  .settings-tabs{display:flex; gap:4px; margin-bottom:18px; border-bottom:1px solid var(--border);}
+  .settings-tab{
+    font-family:var(--body); font-size:13px; font-weight:500; color:var(--ink-faint); background:transparent;
+    border:none; border-bottom:2px solid transparent; padding:9px 4px; margin-right:18px; cursor:pointer;
+  }
+  .settings-tab:hover{color:var(--ink-soft);}
+  .settings-tab.active{color:var(--brick); border-bottom-color:var(--brick);}
+
+  @media (max-width: 640px){
+    .mm-checklist-grid{grid-template-columns:1fr;}
+  }
+
   /* ---------- coming soon page ---------- */
   .coming-soon{
     background:var(--card); border:1px dashed var(--border-strong); border-radius:12px;
@@ -218,7 +251,7 @@
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveRow()">Save row</button>
+      <button class="btn btn-primary" onclick="handleModalSave()">Save row</button>
     </div>
   </div>
 </div>
@@ -241,7 +274,7 @@ const CONFIG = {
    ================================================================ */
 const PAGES = [
   { id:'pricing',   label:'Pricing Guide',            icon:'tag',      ready:true  },
-  { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:false },
+  { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:false },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:false },
   { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:false },
@@ -266,8 +299,12 @@ function icon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 
 let currentPage = 'pricing';
 let usingDemoData = false;
+let usingDemoDataMM = false;
 let pricingRows = [];
+let mmRows = [];
 let editingId = null;
+let editingTable = 'pricing';
+let settingsTab = 'pricing';
 let searchMatches = [];
 let searchIndex = -1;
 
@@ -298,7 +335,9 @@ function renderNav(){
 
 function goTo(pageId){
   currentPage = pageId;
-  renderNav();
+  const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main", "code_label": "A or B", "description": "Replace Engine Oil & Oil Filter.", "time_estimate": null}, {"id": "mmseed-20", "sort_order": 20, "code_type": "checklist", "code_label": null, "description": "Check front and rear brakes. Check brake pads and disc thickness. Check for damage. Check calipers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-30", "sort_order": 30, "code_type": "checklist", "code_label": null, "description": "Check Parking Brake Adjustment.", "time_estimate": null}, {"id": "mmseed-40", "sort_order": 40, "code_type": "checklist", "code_label": null, "description": "Inspect Tie-Rod Ends, Steering Gearbox & Gearbox Boots.", "time_estimate": null}, {"id": "mmseed-50", "sort_order": 50, "code_type": "checklist", "code_label": null, "description": "Check steering linkage.", "time_estimate": null}, {"id": "mmseed-60", "sort_order": 60, "code_type": "checklist", "code_label": null, "description": "Check Boots for Damage and Leaking Grease.", "time_estimate": null}, {"id": "mmseed-70", "sort_order": 70, "code_type": "checklist", "code_label": null, "description": "Inspect Suspension Components.", "time_estimate": null}, {"id": "mmseed-80", "sort_order": 80, "code_type": "checklist", "code_label": null, "description": "Check Condition of Ball Joint Boots for Deterioration, Damage & Tightness.", "time_estimate": null}, {"id": "mmseed-90", "sort_order": 90, "code_type": "checklist", "code_label": null, "description": "Inspect Driveshaft Boots.", "time_estimate": null}, {"id": "mmseed-100", "sort_order": 100, "code_type": "checklist", "code_label": null, "description": "Inspect Brake Hoses & Lines, Including VSA Lines.", "time_estimate": null}, {"id": "mmseed-110", "sort_order": 110, "code_type": "checklist", "code_label": null, "description": "Check Brake Master Cylinder & VSA Modulator-Control Unit for Damage or Leakage.", "time_estimate": null}, {"id": "mmseed-120", "sort_order": 120, "code_type": "checklist", "code_label": null, "description": "Inspect All Fluid Levels & Condition of Fluids. Including: Engine Coolant, Brake Fluid, Windshield Washer Fluid, Power Steering Fluid(if applicable).", "time_estimate": null}, {"id": "mmseed-130", "sort_order": 130, "code_type": "checklist", "code_label": null, "description": "Check catalytic converter heat shields. Check Exhaust Pipes. Check mufflers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-140", "sort_order": 140, "code_type": "checklist", "code_label": null, "description": "Inspect Fuel Lines & Connections.", "time_estimate": null}, {"id": "mmseed-150", "sort_order": 150, "code_type": "checklist", "code_label": null, "description": "Inspect Engine Air Cleaner Filter.", "time_estimate": null}, {"id": "mmseed-160", "sort_order": 160, "code_type": "checklist", "code_label": null, "description": "Inspect Cabin(HVAC) Filter.", "time_estimate": null}, {"id": "mmseed-1010", "sort_order": 1010, "code_type": "sub", "code_label": "1.0", "description": "Rotate Tires(if needed), Check Tire Inflation & Condition.", "time_estimate": "45 MINS - 1 HR"}, {"id": "mmseed-1020", "sort_order": 1020, "code_type": "sub", "code_label": "2.0", "description": "Replace Engine Air Cleaner Filter, Replace Cabin(HVAC) Filter.", "time_estimate": "N/A Replace on as-need basis (Inspection of filters included in A or B services)"}, {"id": "mmseed-1030", "sort_order": 1030, "code_type": "sub", "code_label": "3.0", "description": "Replace Transmission Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1040", "sort_order": 1040, "code_type": "sub", "code_label": "4.0", "description": "Replace Engine Spark Plugs, Replace Engine Valve Cover Gasket, Adjust Engine Valves, Replace Water Pump. For Vehicles Equipped with Timing Belt Add: Replace Timing Belt & Timing Belt Tensioner.", "time_estimate": "NEED CAR ALL DAY. Always confirm parts in-stock prior to customer arrival."}, {"id": "mmseed-1050", "sort_order": 1050, "code_type": "sub", "code_label": "5.0", "description": "Replace Engine Coolant.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1060", "sort_order": 1060, "code_type": "sub", "code_label": "6.0", "description": "Replace Rear Differential Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1070", "sort_order": 1070, "code_type": "sub", "code_label": "7.0", "description": "Replace Brake Fluid.", "time_estimate": "ADD 1 HR"}];
+
+renderNav();
   const searchInput = document.getElementById('pageSearchInput');
   if(searchInput) searchInput.value = '';
   render();
@@ -320,6 +359,19 @@ async function loadPricing(){
     usingDemoData = true;
   }
   pricingRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadMMCodes(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/mmcodes`);
+    if(!res.ok) throw new Error('bad response');
+    mmRows = await res.json();
+    usingDemoDataMM = false;
+  }catch(err){
+    mmRows = JSON.parse(JSON.stringify(SEED_DATA_MM));
+    usingDemoDataMM = true;
+  }
+  mmRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
 function fmtMoney(v){
@@ -374,16 +426,19 @@ function pricingTableHTML(editable){
   </table></div>`;
 }
 
-function actionButtons(id){
-  return `<button class="btn btn-ghost btn-sm" onclick="openEdit('${id}')" aria-label="Edit">${icon('gear').replace('gear','')}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
-  <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteRow('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
+function actionButtons(id, table){
+  table = table || 'pricing';
+  const editFn = table === 'mmcodes' ? 'openMMEdit' : 'openEdit';
+  const deleteFn = table === 'mmcodes' ? 'deleteMMRow' : 'deleteRow';
+  return `<button class="btn btn-ghost btn-sm" onclick="${editFn}('${id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
+  <button class="btn btn-ghost btn-sm btn-danger" onclick="${deleteFn}('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
 }
 
-function demoBanner(){
-  if(!usingDemoData) return '';
-  return `<div class="banner">${icon('gear').replace(/<[^>]+gear[^>]*>/,'')}
+function demoBanner(isDemo, endpointPath){
+  if(!isDemo) return '';
+  return `<div class="banner">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-    Demo mode — the Worker at <code style="font-family:var(--mono)">${CONFIG.API_BASE}</code> isn't reachable, so this is showing the original spreadsheet data in memory. Edits here won't be saved until the Worker + Supabase are connected.</div>`;
+    Demo mode — the Worker at <code style="font-family:var(--mono)">${CONFIG.API_BASE}/${endpointPath}</code> isn't reachable, so this is showing the original spreadsheet data in memory. Edits here won't be saved until the Worker + Supabase are connected.</div>`;
 }
 
 /* ================================================================
@@ -398,28 +453,133 @@ function renderPricingPage(){
         <div class="desc">Labor, parts, and total pricing for every standard service operation.</div>
       </div>
     </div>
-    ${demoBanner()}
+    ${demoBanner(usingDemoData, 'pricing')}
     ${pricingTableHTML(false)}
   `;
 }
 
 /* ================================================================
-   PAGE: Settings (pricing guide CRUD, page 1)
+   PAGE: Maintenance Minder Codes
    ================================================================ */
+function mmMainCardHTML(){
+  const main = mmRows.find(r => r.code_type === 'main');
+  const checklist = mmRows.filter(r => r.code_type === 'checklist');
+  return `<div class="table-wrap mm-main-card">
+    <div class="mm-main-head">
+      <span class="chip mm-letter-chip">A or B</span>
+      <div>
+        <div class="mm-main-title">${main ? escapeHtml(main.description) : ''}</div>
+        <div class="mm-main-sub">Performed at every visit, whichever letter shows on the dash</div>
+      </div>
+    </div>
+    <div class="mm-checklist-grid">
+      ${checklist.map(r => `<div class="mm-checklist-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <span>${escapeHtml(r.description)}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function mmSubCodesTableHTML(){
+  const subs = mmRows.filter(r => r.code_type === 'sub');
+  const rowsHtml = subs.map(r => `<tr class="row-item">
+    <td class="mono"><span class="chip mm-number-chip">${escapeHtml(r.code_label)}</span></td>
+    <td>${escapeHtml(r.description)}</td>
+    <td>${escapeHtml(r.time_estimate)}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:70px">Code</th><th>Additional service</th><th>Time to add</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="3" class="empty-hint">No sub-codes yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderMMCodesPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Maintenance minder codes</h2>
+        <div class="desc">Decode the dashboard message for a customer — the letter is the oil service, each number is an add-on service due at this mileage.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataMM, 'mmcodes')}
+    <div class="mm-explainer">
+      When the dash shows a wrench icon with a code like <strong>B 1 3</strong>, that's the letter service plus every listed number, run together. Read it back to the customer as separate line items — "your Honda's due for the B service, a tire rotation, and a transmission fluid change" — using the breakdown below.
+    </div>
+    <div class="section-label">Main code — oil &amp; filter service</div>
+    ${mmMainCardHTML()}
+    <div class="section-label">Number codes — additional services</div>
+    ${mmSubCodesTableHTML()}
+  `;
+}
+
+/* ================================================================
+   PAGE: Settings
+   ================================================================ */
+const SETTINGS_TABLE_META = {
+  pricing: { label: 'Pricing Guide' },
+  mmcodes: { label: 'Maintenance Minder Codes' },
+};
+
+function settingsTabsHTML(){
+  return `<div class="settings-tabs">
+    ${Object.entries(SETTINGS_TABLE_META).map(([key, meta]) => `
+      <button class="settings-tab${settingsTab === key ? ' active' : ''}" onclick="switchSettingsTab('${key}')">${meta.label}</button>
+    `).join('')}
+  </div>`;
+}
+
 function renderSettingsPage(){
+  if(settingsTab === 'mmcodes'){
+    return `
+      <div class="topbar">
+        <div>
+          <h2>Settings</h2>
+          <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openMMAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+        </div>
+      </div>
+      ${settingsTabsHTML()}
+      ${demoBanner(usingDemoDataMM, 'mmcodes')}
+      ${mmSettingsTableHTML()}
+    `;
+  }
   return `
     <div class="topbar">
       <div>
         <h2>Settings</h2>
-        <div class="desc">Add, edit, or remove entries. Currently managing the Pricing Guide — the same pattern will extend to every other page as it's built.</div>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openAdd()">${icon('tag').replace('tag','').replace('<circle','')}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+        <button class="btn btn-primary" onclick="openAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
       </div>
     </div>
-    ${demoBanner()}
+    ${settingsTabsHTML()}
+    ${demoBanner(usingDemoData, 'pricing')}
     ${pricingTableHTML(true)}
   `;
+}
+
+function switchSettingsTab(tab){
+  settingsTab = tab;
+  render();
+}
+
+function mmSettingsTableHTML(){
+  const typeLabels = { main:'Main code', checklist:'Checklist item', sub:'Number code' };
+  const rowsHtml = mmRows.map(r => `<tr class="row-item">
+    <td><span class="chip">${typeLabels[r.code_type] || r.code_type}</span></td>
+    <td class="mono">${r.code_label ? escapeHtml(r.code_label) : ''}</td>
+    <td>${escapeHtml(r.description)}</td>
+    <td>${r.time_estimate ? escapeHtml(r.time_estimate) : ''}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'mmcodes')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:120px">Type</th><th style="width:90px">Code</th><th>Description</th><th>Time estimate</th><th class="num">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet. Add the first one.</td></tr>`}</tbody>
+  </table></div>`;
 }
 
 /* ================================================================
@@ -446,8 +606,12 @@ async function render(){
   if(currentPage === 'pricing'){
     if(pricingRows.length === 0) await loadPricing();
     main.innerHTML = renderPricingPage();
+  } else if(currentPage === 'mmcodes'){
+    if(mmRows.length === 0) await loadMMCodes();
+    main.innerHTML = renderMMCodesPage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
+    if(mmRows.length === 0) await loadMMCodes();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -596,6 +760,7 @@ function emptyRow(){
 
 function openAdd(){
   editingId = null;
+  editingTable = 'pricing';
   document.getElementById('modalTitle').textContent = 'Add row';
   document.getElementById('modalBody').innerHTML = modalFormHTML(emptyRow());
   document.getElementById('modalOverlay').classList.add('open');
@@ -605,14 +770,80 @@ function openEdit(id){
   const row = pricingRows.find(r => r.id === id);
   if(!row) return;
   editingId = id;
+  editingTable = 'pricing';
   document.getElementById('modalTitle').textContent = 'Edit row';
   document.getElementById('modalBody').innerHTML = modalFormHTML(row);
   document.getElementById('modalOverlay').classList.add('open');
   toggleFieldVisibility();
 }
 
+function emptyMMRow(){
+  return { code_type:'sub', code_label:'', description:'', time_estimate:'' };
+}
+
+function openMMAdd(){
+  editingId = null;
+  editingTable = 'mmcodes';
+  document.getElementById('modalTitle').textContent = 'Add row';
+  document.getElementById('modalBody').innerHTML = mmModalFormHTML(emptyMMRow());
+  document.getElementById('modalOverlay').classList.add('open');
+  toggleMMFieldVisibility();
+}
+
+function openMMEdit(id){
+  const row = mmRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'mmcodes';
+  document.getElementById('modalTitle').textContent = 'Edit row';
+  document.getElementById('modalBody').innerHTML = mmModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+  toggleMMFieldVisibility();
+}
+
+function mmModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Row type</label>
+        <select id="mm_code_type" onchange="toggleMMFieldVisibility()">
+          <option value="main" ${r.code_type==='main'?'selected':''}>Main code (A or B)</option>
+          <option value="checklist" ${r.code_type==='checklist'?'selected':''}>Checklist item</option>
+          <option value="sub" ${r.code_type==='sub'?'selected':''}>Number code</option>
+        </select>
+      </div>
+      <div class="field" id="mm_wrap_label">
+        <label>Code label</label>
+        <input type="text" id="mm_code_label" value="${escapeAttr(r.code_label)}" placeholder="e.g. A or B, 3.0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Description</label>
+        <textarea id="mm_description" placeholder="What this code means / what's performed">${escapeHtml(r.description||'')}</textarea>
+      </div>
+    </div>
+    <div class="field-row" id="mm_wrap_time">
+      <div class="field full">
+        <label>Time estimate</label>
+        <input type="text" id="mm_time_estimate" value="${escapeAttr(r.time_estimate)}" placeholder="e.g. ADD 1 HR, 45 MINS - 1 HR">
+      </div>
+    </div>
+  `;
+}
+
+function toggleMMFieldVisibility(){
+  const type = document.getElementById('mm_code_type').value;
+  document.getElementById('mm_wrap_label').style.display = type === 'checklist' ? 'none' : 'flex';
+  document.getElementById('mm_wrap_time').style.display = type === 'sub' ? 'grid' : 'none';
+}
+
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function handleModalSave(){
+  if(editingTable === 'mmcodes') saveMMRow(); else saveRow();
 }
 
 function modalFormHTML(r){
@@ -718,6 +949,44 @@ async function deleteRow(id){
   pricingRows = pricingRows.filter(r => r.id !== id);
   if(!usingDemoData){
     try{ await fetch(`${CONFIG.API_BASE}/pricing/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+async function saveMMRow(){
+  const code_type = document.getElementById('mm_code_type').value;
+  const payload = {
+    code_type,
+    code_label: code_type === 'checklist' ? null : type_or_null(document.getElementById('mm_code_label').value),
+    description: document.getElementById('mm_description').value.trim(),
+    time_estimate: code_type === 'sub' ? type_or_null(document.getElementById('mm_time_estimate').value) : null,
+  };
+  if(!payload.description){
+    alert('Description is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(mmRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataMM){
+      try{ await fetch(`${CONFIG.API_BASE}/mmcodes/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (mmRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    mmRows.push(newRow);
+    if(!usingDemoDataMM){
+      try{ await fetch(`${CONFIG.API_BASE}/mmcodes`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteMMRow(id){
+  if(!confirm('Delete this row? This can\'t be undone.')) return;
+  mmRows = mmRows.filter(r => r.id !== id);
+  if(!usingDemoDataMM){
+    try{ await fetch(`${CONFIG.API_BASE}/mmcodes/${id}`, {method:'DELETE'}); }catch(e){}
   }
   render();
 }
