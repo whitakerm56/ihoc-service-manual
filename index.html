@@ -143,6 +143,7 @@
     color:var(--ink-faint); margin:0 0 10px;
   }
   .mm-main-card{padding:18px 20px 20px; margin-bottom:26px;}
+  .phone-area-label{margin-top:22px;}
   .mm-main-head{display:flex; align-items:flex-start; gap:14px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border);}
   .mm-letter-chip{font-family:var(--display); font-size:15px; font-weight:600; padding:5px 12px; flex-shrink:0; background:var(--brick-light); border-color:transparent; color:var(--brick-dark);}
   .mm-main-title{font-weight:600; font-size:15px; margin-bottom:2px;}
@@ -869,9 +870,9 @@ function phoneDirectoryHTML(){
       <td>${escapeHtml(r.role)}</td>
       <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
     </tr>`).join('');
-    return `<div class="section-label">${escapeHtml(area)}</div>
-    <div class="table-wrap" style="margin-bottom:22px;"><table>
-      <thead><tr><th>Name</th><th>Role / station</th><th class="num" style="width:100px">Extension</th></tr></thead>
+    return `<div class="section-label phone-area-label">${escapeHtml(area)}</div>
+    <div class="table-wrap" style="margin-bottom:26px;"><table>
+      <thead><tr><th>Name</th><th>Role</th><th class="num" style="width:100px">Extension</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table></div>`;
   }).join('');
@@ -1078,7 +1079,7 @@ function phoneSettingsTableHTML(){
     <td class="actions-cell">${actionButtons(r.id, 'phones')}</td>
   </tr>`).join('');
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Name</th><th>Role / station</th><th style="width:140px">Area</th><th style="width:90px">Extension</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <thead><tr><th>Name</th><th>Role</th><th style="width:140px">Area</th><th style="width:90px">Extension</th><th class="num" style="width:90px">Actions</th></tr></thead>
     <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
   </table></div>`;
 }
@@ -1972,7 +1973,7 @@ function phoneModalFormHTML(r){
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Role / station</label>
+        <label>Role</label>
         <input type="text" id="p_role" value="${escapeAttr(r.role)}" placeholder="e.g. Advisor 1, Rack 2 & 3">
       </div>
       <div class="field">
