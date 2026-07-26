@@ -334,6 +334,7 @@
   }
   .field textarea{resize:vertical; min-height:56px; font-family:var(--body);}
   .checkbox-row{display:flex; align-items:center; gap:8px; grid-column:1/-1;}
+  .computed-preview{font-family:var(--mono); font-size:13px; color:var(--brick-dark); background:var(--brick-light); border:1px solid var(--border-strong); border-radius:6px; padding:9px 12px;}
   .workday-checks{display:flex; gap:12px; flex-wrap:wrap;}
   .workday-check{display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink-soft); text-transform:none;}
   .checkbox-row label{font-size:12.5px; color:var(--ink-soft); font-weight:500; text-transform:none; letter-spacing:0;}
@@ -731,18 +732,43 @@ function fmtHours(v){
 /* ================================================================
    RENDER: PRICING GUIDE + SETTINGS share a table renderer
    ================================================================ */
+function findLaborRate(id){
+  return laborRateRows.find(r => r.id === id);
+}
+
+function computedLaborPrice(r){
+  if(r.labor_rate_id){
+    const rate = findLaborRate(r.labor_rate_id);
+    if(rate && r.labor_hours != null) return r.labor_hours * rate.rate_amount;
+  }
+  return r.labor_price;
+}
+
+function computedTotalPrice(r){
+  if(r.price_out) return null;
+  if(r.labor_rate_id){
+    const rate = findLaborRate(r.labor_rate_id);
+    if(rate){
+      const labor = r.labor_hours != null ? r.labor_hours * rate.rate_amount : 0;
+      const parts = r.total_parts != null ? r.total_parts : 0;
+      return labor + parts;
+    }
+  }
+  return r.total_price;
+}
+
 function pricingTableHTML(editable){
   let prevMm = null;
   const rowsHtml = pricingRows.map(r => {
     if(r.row_type === 'header'){
       prevMm = null;
-      return `<tr class="row-header"><td colspan="${editable?8:7}">${escapeHtml(r.description)}</td></tr>`;
+      return `<tr class="row-header"><td colspan="${editable?7:6}">${escapeHtml(r.description)}</td></tr>`;
     }
     if(r.row_type === 'note'){
       prevMm = null;
       const chip = r.mm_code ? `<span class="chip">${escapeHtml(r.mm_code)}</span> ` : '';
       const editCell = editable ? `<td class="actions-cell">${actionButtons(r.id)}</td>` : '';
-      return `<tr class="row-note"><td colspan="${editable?7:7}">${chip}${escapeHtml(r.description)}</td>${editCell}</tr>`;
+      return `<tr class="row-note"><td colspan="6">${chip}${escapeHtml(r.description)}</td>${editCell}</tr>`;
     }
     const groupStart = r.mm_code && r.mm_code !== prevMm;
     if(r.mm_code) prevMm = r.mm_code;
@@ -753,10 +779,9 @@ function pricingTableHTML(editable){
       <td class="mono">${mm}</td>
       <td>${escapeHtml(r.description)}${r.timing_type ? ` <span class="chip">${escapeHtml(r.timing_type)}</span>`:''}</td>
       <td class="num">${fmtHours(r.labor_hours)}</td>
-      <td class="num">${fmtMoney(r.labor_price)}</td>
-      <td class="num">${fmtMoney(r.labor_rate)}</td>
+      <td class="num">${fmtMoney(computedLaborPrice(r))}</td>
       <td class="num">${parts}</td>
-      <td class="num total">${fmtMoney(r.total_price)}</td>
+      <td class="num total">${fmtMoney(computedTotalPrice(r))}</td>
       ${editCell}
     </tr>`;
   }).join('');
@@ -764,10 +789,10 @@ function pricingTableHTML(editable){
   return `<div class="table-wrap"><table>
     <thead><tr>
       <th>MM code</th><th>Description</th><th class="num">Labor hrs</th><th class="num">Labor $</th>
-      <th class="num">Labor rate</th><th class="num">Parts</th><th class="num">Total</th>
+      <th class="num">Parts</th><th class="num">Total</th>
       ${editable?'<th class="num">Actions</th>':''}
     </tr></thead>
-    <tbody>${rowsHtml || `<tr><td colspan="8" class="empty-hint">No rows yet. Add the first one.</td></tr>`}</tbody>
+    <tbody>${rowsHtml || `<tr><td colspan="7" class="empty-hint">No rows yet. Add the first one.</td></tr>`}</tbody>
   </table></div>`;
 }
 
@@ -2163,6 +2188,7 @@ function openAdd(){
   document.getElementById('modalTitle').textContent = 'Add row';
   document.getElementById('modalBody').innerHTML = modalFormHTML(emptyRow());
   document.getElementById('modalOverlay').classList.add('open');
+  toggleFieldVisibility();
 }
 
 function openEdit(id){
@@ -3614,23 +3640,34 @@ function modalFormHTML(r){
       </div>
       <div class="field">
         <label>Labor hours</label>
-        <input type="number" step="0.1" id="f_labor_hours" value="${r.labor_hours ?? ''}">
+        <input type="number" step="0.1" id="f_labor_hours" value="${r.labor_hours ?? ''}" onchange="toggleFieldVisibility()">
       </div>
-      <div class="field">
+      <div class="field full">
+        <label>Labor rate category</label>
+        <select id="f_labor_rate_id" onchange="toggleFieldVisibility()">
+          <option value="">— Custom / fixed rate —</option>
+          ${laborRateRows.map(lr => `<option value="${lr.id}" ${r.labor_rate_id === lr.id ? 'selected':''}>${escapeHtml(lr.rate_name)} (${fmtMoney(lr.rate_amount)}/hr)</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" id="wrap_labor_price">
         <label>Labor price</label>
         <input type="number" step="0.01" id="f_labor_price" value="${r.labor_price ?? ''}">
       </div>
-      <div class="field">
+      <div class="field" id="wrap_labor_rate">
         <label>Labor rate</label>
         <input type="number" step="0.01" id="f_labor_rate" value="${r.labor_rate ?? ''}">
       </div>
       <div class="field">
         <label>Total parts</label>
-        <input type="number" step="0.01" id="f_total_parts" value="${r.total_parts ?? ''}">
+        <input type="number" step="0.01" id="f_total_parts" value="${r.total_parts ?? ''}" onchange="toggleFieldVisibility()">
       </div>
-      <div class="field">
+      <div class="field" id="wrap_total_price">
         <label>Total price</label>
         <input type="number" step="0.01" id="f_total_price" value="${r.total_price ?? ''}">
+      </div>
+      <div class="field full" id="wrap_computed_preview">
+        <label>Calculated (updates automatically when the rate changes)</label>
+        <div class="computed-preview" id="computed_preview_text"></div>
       </div>
       <div class="checkbox-row">
         <input type="checkbox" id="f_price_out" ${r.price_out ? 'checked':''}>
@@ -3644,6 +3681,27 @@ function toggleFieldVisibility(){
   const type = document.getElementById('f_row_type').value;
   document.getElementById('wrap_item_fields').style.display = type === 'item' ? 'grid' : 'none';
   document.getElementById('wrap_mm_code').style.display = type === 'header' ? 'none' : 'flex';
+  if(type !== 'item') return;
+
+  const rateIdEl = document.getElementById('f_labor_rate_id');
+  const rateId = rateIdEl ? rateIdEl.value : '';
+  const usingNamedRate = !!rateId;
+
+  document.getElementById('wrap_labor_price').style.display = usingNamedRate ? 'none' : 'flex';
+  document.getElementById('wrap_labor_rate').style.display = usingNamedRate ? 'none' : 'flex';
+  document.getElementById('wrap_total_price').style.display = usingNamedRate ? 'none' : 'flex';
+  document.getElementById('wrap_computed_preview').style.display = usingNamedRate ? 'flex' : 'none';
+
+  if(usingNamedRate){
+    const rate = laborRateRows.find(lr => lr.id === rateId);
+    const hours = Number(document.getElementById('f_labor_hours').value) || 0;
+    const parts = Number(document.getElementById('f_total_parts').value) || 0;
+    const laborPrice = rate ? hours * rate.rate_amount : 0;
+    const preview = document.getElementById('computed_preview_text');
+    if(preview){
+      preview.textContent = `Labor $${laborPrice.toFixed(2)} + Parts $${parts.toFixed(2)} = Total $${(laborPrice + parts).toFixed(2)}`;
+    }
+  }
 }
 
 async function saveRow(){
@@ -3656,11 +3714,21 @@ async function saveRow(){
   if(row_type === 'item'){
     payload.timing_type = type_or_null(document.getElementById('f_timing_type').value);
     payload.labor_hours = numOrNull(document.getElementById('f_labor_hours').value);
-    payload.labor_price = numOrNull(document.getElementById('f_labor_price').value);
-    payload.labor_rate = numOrNull(document.getElementById('f_labor_rate').value);
     payload.total_parts = numOrNull(document.getElementById('f_total_parts').value);
     payload.price_out = document.getElementById('f_price_out').checked;
-    payload.total_price = numOrNull(document.getElementById('f_total_price').value);
+
+    const laborRateId = document.getElementById('f_labor_rate_id').value || null;
+    payload.labor_rate_id = laborRateId;
+    if(laborRateId){
+      // Computed dynamically from the linked rate — don't store stale numbers.
+      payload.labor_price = null;
+      payload.labor_rate = null;
+      payload.total_price = null;
+    } else {
+      payload.labor_price = numOrNull(document.getElementById('f_labor_price').value);
+      payload.labor_rate = numOrNull(document.getElementById('f_labor_rate').value);
+      payload.total_price = numOrNull(document.getElementById('f_total_price').value);
+    }
   }
   if(!payload.description){
     alert('Description is required.');
