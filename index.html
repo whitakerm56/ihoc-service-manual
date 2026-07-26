@@ -168,6 +168,42 @@
   .mm-checklist-item svg{width:15px; height:15px; margin-top:2px; color:var(--steel); flex-shrink:0;}
   .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
 
+  /* ---------- process board ---------- */
+  .board-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
+  .board-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
+  .board-legend-dot{width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;}
+  .board-wrap{overflow-x:auto; margin-bottom:30px;}
+  table.board-table{table-layout:fixed; min-width:1080px; border-collapse:separate; border-spacing:0;}
+  .board-role-col{position:sticky; left:0; background:var(--card); width:130px; min-width:130px; text-align:left; z-index:1; padding:10px 12px;}
+  thead .board-role-col{background:#1A1B1D; z-index:2;}
+  .board-phase-col{width:190px; text-align:left; font-size:10.5px;}
+  td.board-cell{vertical-align:top; padding:10px 8px; border-bottom:1px solid var(--border); border-left:1px solid var(--border); background:#17181A;}
+  td.board-cell-empty{background:transparent;}
+  .board-chip{
+    background:#1E2023; border:1px solid var(--border-strong); border-left:3px solid; border-radius:6px;
+    padding:7px 9px; font-size:11.5px; line-height:1.4; color:var(--ink);
+  }
+  .board-chip-connector{width:1px; height:8px; background:var(--border-strong); margin:2px auto;}
+  .role-badge{display:inline-block; font-family:var(--display); font-weight:600; font-size:11.5px; padding:4px 10px; border-radius:20px; border:1px solid; text-transform:uppercase; letter-spacing:.03em;}
+
+  .tracker-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:30px;}
+  .tracker-card{padding:16px 18px;}
+  .tracker-head{margin-bottom:12px;}
+  .tracker-name{font-family:var(--display); font-weight:600; font-size:15px;}
+  .tracker-subtitle{font-size:12px; color:var(--ink-faint); font-style:italic; margin-top:2px;}
+  .tracker-flow{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+  .tracker-step{background:#1E2023; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:12px; color:var(--ink);}
+  .tracker-arrow{width:14px; height:14px; color:var(--ink-faint); flex-shrink:0;}
+
+  .rules-list{display:flex; flex-direction:column; gap:10px; margin-bottom:10px;}
+  .rule-card{display:flex; align-items:flex-start; gap:12px; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--brick); border-radius:8px; padding:12px 16px;}
+  .rule-number{font-family:var(--display); font-weight:600; font-size:13px; color:var(--brick); background:var(--brick-light); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .rule-text{font-size:13.5px; line-height:1.5; color:var(--ink); padding-top:2px;}
+
+  @media (max-width: 900px){
+    .tracker-grid{grid-template-columns:1fr;}
+  }
+
   /* ---------- oil application guide ---------- */
   .oil-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
   .oil-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
@@ -333,7 +369,7 @@ const PAGES = [
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
   { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:true  },
-  { id:'process',   label:'Process Board',             icon:'flow',     ready:false },
+  { id:'process',   label:'Process Board',             icon:'flow',     ready:true  },
   { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:false },
   { id:'schedule',  label:'Employee Schedule',         icon:'calendar', ready:false },
 ];
@@ -361,6 +397,9 @@ let usingDemoDataOtherFluids = false;
 let usingDemoDataFluidParts = false;
 let usingDemoDataPhones = false;
 let usingDemoDataHuntGroups = false;
+let usingDemoDataLifecycle = false;
+let usingDemoDataSubprocesses = false;
+let usingDemoDataRules = false;
 let pricingRows = [];
 let mmRows = [];
 let vendorRows = [];
@@ -369,12 +408,17 @@ let otherFluidsRows = [];
 let fluidPartsRows = [];
 let phoneRows = [];
 let huntGroupRows = [];
+let lifecycleRows = [];
+let subprocessRows = [];
+let roRulesRows = [];
 let editingId = null;
 let editingTable = 'pricing';
 let editingVendorId = null;
+let editingSubprocessId = null;
 let settingsTab = 'pricing';
 let oilSettingsSubTab = 'engine';
 let phoneSettingsSubTab = 'directory';
+let processSettingsSubTab = 'lifecycle';
 let searchMatches = [];
 let searchIndex = -1;
 
@@ -415,6 +459,10 @@ const SEED_DATA_OTHERFLUIDS = [{"id": "ofseed-10", "sort_order": 10, "model": "A
 
 const SEED_DATA_PHONES = [{"id": "pxseed-10", "sort_order": 10, "name": "Mason Whitaker", "role": "Service & Parts Director", "area": "Management", "extension": "200"}, {"id": "pxseed-20", "sort_order": 20, "name": "Kaci Phansisay", "role": "Advisor 1", "area": "Service Reception", "extension": "203"}, {"id": "pxseed-30", "sort_order": 30, "name": "Danny Pagel Jensen", "role": "Advisor 2", "area": "Service Reception", "extension": "202"}, {"id": "pxseed-40", "sort_order": 40, "name": "Waylon Foote", "role": "Advisor 3", "area": "Service Reception", "extension": "204"}, {"id": "pxseed-50", "sort_order": 50, "name": "Tara Gray", "role": "Receptionist", "area": "Front Office", "extension": "700"}, {"id": "pxseed-60", "sort_order": 60, "name": "Jared Scherieble", "role": "Parts Manager", "area": "Parts Department", "extension": "300"}, {"id": "pxseed-70", "sort_order": 70, "name": "Stuart Wilson", "role": "Parts Associate", "area": "Parts Department", "extension": "304"}, {"id": "pxseed-80", "sort_order": 80, "name": null, "role": "Parts Front Counter", "area": "Parts Department", "extension": "301"}, {"id": "pxseed-90", "sort_order": 90, "name": null, "role": "Parts Back Counter", "area": "Parts Department", "extension": "303"}, {"id": "pxseed-100", "sort_order": 100, "name": null, "role": "BDC 1", "area": "BDC", "extension": "602"}, {"id": "pxseed-110", "sort_order": 110, "name": null, "role": "BDC 2", "area": "BDC", "extension": "601"}, {"id": "pxseed-120", "sort_order": 120, "name": "Zach Anderson", "role": "Rack 1", "area": "Shop Floor", "extension": null}, {"id": "pxseed-130", "sort_order": 130, "name": "Tate Tornow / Kyen Phansisay", "role": "Rack 2 & 3", "area": "Shop Floor", "extension": "205"}, {"id": "pxseed-140", "sort_order": 140, "name": "Erick Hinchcliff", "role": "Rack 4 & 5", "area": "Shop Floor", "extension": "112"}, {"id": "pxseed-150", "sort_order": 150, "name": "Jesse Wharton", "role": "Rack 6 & 7", "area": "Shop Floor", "extension": "208"}, {"id": "pxseed-160", "sort_order": 160, "name": "Kassandra Pomme", "role": "Rack 8 & 9", "area": "Shop Floor", "extension": "209"}, {"id": "pxseed-170", "sort_order": 170, "name": null, "role": "Detail", "area": "Shop Floor", "extension": "206"}, {"id": "pxseed-180", "sort_order": 180, "name": null, "role": "Alignment", "area": "Shop Floor", "extension": null}, {"id": "pxseed-190", "sort_order": 190, "name": null, "role": "EV Bay (No Lift)", "area": "Shop Floor", "extension": null}];
 const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_number": "1112", "group_name": "BDC / Reception", "members": "601, 602, 700"}, {"id": "hgseed-20", "sort_order": 20, "group_number": "1105", "group_name": "Service Advisors", "members": "200, 202, 203, 204"}, {"id": "hgseed-30", "sort_order": 30, "group_number": "1108", "group_name": "Parts", "members": "300, 301, 303, 304"}, {"id": "hgseed-40", "sort_order": 40, "group_number": "1106", "group_name": "Technicians", "members": "112, 205, 208, 209"}];
+
+const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "phase": "Intake & Scheduling", "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "phase": "Intake & Scheduling", "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-30", "sort_order": 30, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-40", "sort_order": 40, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter area"}, {"id": "lcseed-50", "sort_order": 50, "phase": "Intake & Scheduling", "role": "Manager", "step_text": "Work Distribution"}, {"id": "lcseed-60", "sort_order": 60, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "phase": "Diagnosis & Inspection", "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "phase": "Customer Approval", "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-110", "sort_order": 110, "phase": "Customer Approval", "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-120", "sort_order": 120, "phase": "Customer Approval", "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-130", "sort_order": 130, "phase": "Customer Approval", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-140", "sort_order": 140, "phase": "Repair Execution & QC", "role": "Parts", "step_text": "Deliver Authorized A.S.R.'s to Technician"}, {"id": "lcseed-150", "sort_order": 150, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-160", "sort_order": 160, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-170", "sort_order": 170, "phase": "Repair Execution & QC", "role": "Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-180", "sort_order": 180, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-190", "sort_order": 190, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-200", "sort_order": 200, "phase": "Follow-Up", "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-210", "sort_order": 210, "phase": "Follow-Up", "role": "Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
+const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
+const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -532,6 +580,46 @@ async function loadHuntGroups(){
   huntGroupRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
+async function loadLifecycle(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/lifecycle`);
+    if(!res.ok) throw new Error('bad response');
+    lifecycleRows = await res.json();
+    usingDemoDataLifecycle = false;
+  }catch(err){
+    lifecycleRows = JSON.parse(JSON.stringify(SEED_DATA_LIFECYCLE));
+    usingDemoDataLifecycle = true;
+  }
+  lifecycleRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadSubprocesses(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/subprocesses`);
+    if(!res.ok) throw new Error('bad response');
+    subprocessRows = await res.json();
+    usingDemoDataSubprocesses = false;
+  }catch(err){
+    subprocessRows = JSON.parse(JSON.stringify(SEED_DATA_SUBPROCESSES));
+    usingDemoDataSubprocesses = true;
+  }
+  subprocessRows.sort((a,b) => a.sort_order - b.sort_order);
+  subprocessRows.forEach(sp => (sp.ro_subprocess_steps || []).sort((a,b) => a.sort_order - b.sort_order));
+}
+
+async function loadRules(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/rorules`);
+    if(!res.ok) throw new Error('bad response');
+    roRulesRows = await res.json();
+    usingDemoDataRules = false;
+  }catch(err){
+    roRulesRows = JSON.parse(JSON.stringify(SEED_DATA_RORULES));
+    usingDemoDataRules = true;
+  }
+  roRulesRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
 function fmtMoney(v){
   if(v === null || v === undefined || v === '') return '';
   return '$' + Number(v).toFixed(2);
@@ -593,6 +681,9 @@ const TABLE_ACTIONS = {
   fluidparts:   { edit: 'openFluidPartEdit',  delete: 'deleteFluidPartRow' },
   phones:       { edit: 'openPhoneEdit',      delete: 'deletePhoneRow' },
   huntgroups:   { edit: 'openHuntGroupEdit',  delete: 'deleteHuntGroupRow' },
+  lifecycle:    { edit: 'openLifecycleEdit',  delete: 'deleteLifecycleRow' },
+  subprocess:   { edit: 'openSubprocessEdit', delete: 'deleteSubprocessRow' },
+  rorules:      { edit: 'openRuleEdit',       delete: 'deleteRuleRow' },
 };
 
 function actionButtons(id, table){
@@ -967,6 +1058,98 @@ function renderPhonesPage(){
 }
 
 /* ================================================================
+   PAGE: Process Board
+   ================================================================ */
+const ROLE_ORDER = ['BDC', 'Advisor', 'Technician', 'Parts', 'Manager'];
+const ROLE_COLORS = {
+  BDC: '#4FA8E8',
+  Advisor: '#E5342A',
+  Technician: '#3FBE79',
+  Parts: '#E0B23E',
+  Manager: '#B18AE8',
+};
+function roleColor(role){ return ROLE_COLORS[role] || '#8B8D93'; }
+
+function swimLaneBoardHTML(){
+  const phases = [];
+  lifecycleRows.forEach(r => { if(!phases.includes(r.phase)) phases.push(r.phase); });
+
+  const byRolePhase = {};
+  lifecycleRows.forEach(r => {
+    const key = r.role + '|' + r.phase;
+    if(!byRolePhase[key]) byRolePhase[key] = [];
+    byRolePhase[key].push(r);
+  });
+
+  const rolesPresent = ROLE_ORDER.filter(role => lifecycleRows.some(r => r.role === role));
+
+  const headerCells = phases.map(p => `<th class="board-phase-col">${escapeHtml(p)}</th>`).join('');
+  const bodyRows = rolesPresent.map(role => {
+    const cells = phases.map(phase => {
+      const steps = byRolePhase[role + '|' + phase] || [];
+      if(!steps.length) return `<td class="board-cell board-cell-empty"></td>`;
+      const chips = steps.map(s => `<div class="board-chip" style="border-left-color:${roleColor(role)}">${escapeHtml(s.step_text)}</div>`).join('<div class="board-chip-connector"></div>');
+      return `<td class="board-cell">${chips}</td>`;
+    }).join('');
+    return `<tr>
+      <td class="board-role-col"><span class="role-badge" style="background:${roleColor(role)}22; color:${roleColor(role)}; border-color:${roleColor(role)}55;">${escapeHtml(role)}</span></td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  return `<div class="table-wrap board-wrap"><table class="board-table">
+    <thead><tr><th class="board-role-col">Role</th>${headerCells}</tr></thead>
+    <tbody>${bodyRows || `<tr><td colspan="${phases.length+1}" class="empty-hint">No lifecycle steps yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function subprocessTrackerHTML(sp){
+  const steps = sp.ro_subprocess_steps || [];
+  const body = steps.length
+    ? `<div class="tracker-flow">${steps.map((s,i) => `${i>0 ? `<svg class="tracker-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>` : ''}<div class="tracker-step">${escapeHtml(s.step_text)}</div>`).join('')}</div>`
+    : `<div class="empty-hint" style="padding:16px 4px; text-align:left;">No steps recorded for this process yet — add some in Settings.</div>`;
+  return `<div class="table-wrap tracker-card">
+    <div class="tracker-head">
+      <div class="tracker-name">${escapeHtml(sp.name)}</div>
+      ${sp.subtitle ? `<div class="tracker-subtitle">${escapeHtml(sp.subtitle)}</div>` : ''}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function rulesListHTML(){
+  if(!roRulesRows.length){
+    return `<div class="table-wrap"><div class="empty-hint">No rules added yet.</div></div>`;
+  }
+  return `<div class="rules-list">${roRulesRows.map((r,i) => `
+    <div class="rule-card">
+      <div class="rule-number">${i+1}</div>
+      <div class="rule-text">${escapeHtml(r.rule_text)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderProcessPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Process board</h2>
+        <div class="desc">The life cycle of a repair order — who does what, in what order — plus the sub-processes and shop rules behind it.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataLifecycle, 'lifecycle')}
+    <div class="section-label">Life cycle of an RO</div>
+    <div class="board-legend">${ROLE_ORDER.filter(r => lifecycleRows.some(x => x.role === r)).map(r => `<span class="board-legend-item"><span class="board-legend-dot" style="background:${roleColor(r)}"></span>${r}</span>`).join('')}</div>
+    ${swimLaneBoardHTML()}
+    <div class="section-label">Sub-processes</div>
+    <div class="tracker-grid">
+      ${subprocessRows.map(sp => subprocessTrackerHTML(sp)).join('')}
+    </div>
+    <div class="section-label">RO rules &amp; policies</div>
+    ${rulesListHTML()}
+  `;
+}
+
+/* ================================================================
    PAGE: Settings
    ================================================================ */
 const SETTINGS_TABLE_META = {
@@ -975,6 +1158,7 @@ const SETTINGS_TABLE_META = {
   vendors: { label: 'Vendors' },
   oilguide: { label: 'Oil Application Guide' },
   phones: { label: 'Phone Extensions' },
+  process: { label: 'Process Board' },
 };
 
 function settingsTabsHTML(){
@@ -1010,6 +1194,9 @@ function renderSettingsPage(){
   }
   if(settingsTab === 'phones'){
     return renderPhonesSettings();
+  }
+  if(settingsTab === 'process'){
+    return renderProcessSettings();
   }
   return `
     <div class="topbar">
@@ -1186,6 +1373,104 @@ function renderPhonesSettings(){
   `;
 }
 
+/* ---------- Process Board Settings ---------- */
+function switchProcessSettingsSubTab(tab){
+  processSettingsSubTab = tab;
+  render();
+}
+
+function lifecycleSettingsTableHTML(){
+  const rowsHtml = lifecycleRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.phase)}</td>
+    <td><span class="role-badge" style="background:${roleColor(r.role)}22; color:${roleColor(r.role)}; border-color:${roleColor(r.role)}55;">${escapeHtml(r.role)}</span></td>
+    <td>${escapeHtml(r.step_text)}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'lifecycle')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:180px">Phase</th><th style="width:120px">Role</th><th>Step</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function subprocessSettingsCardHTML(sp){
+  const steps = sp.ro_subprocess_steps || [];
+  const rowsHtml = steps.map(s => `<tr class="row-item">
+    <td>${escapeHtml(s.step_text)}</td>
+    <td class="actions-cell">${subprocessStepActionButtons(sp.id, s.id)}</td>
+  </tr>`).join('');
+  const addStepRow = `<tr class="row-item"><td colspan="2" style="padding:10px 14px;">
+    <button class="btn btn-sm" onclick="openSubStepAdd('${sp.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg> Add step</button>
+  </td></tr>`;
+  return `<div class="table-wrap vendor-card">
+    <div class="vendor-card-head">
+      <div>
+        <div class="vendor-name">${escapeHtml(sp.name)}</div>
+        ${sp.subtitle ? `<div class="vendor-sub">${escapeHtml(sp.subtitle)}</div>` : ''}
+      </div>
+      <div class="actions-cell">${actionButtons(sp.id, 'subprocess')}</div>
+    </div>
+    <table>
+      <thead><tr><th>Step</th><th class="num" style="width:90px">Actions</th></tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="2" class="empty-hint">No steps yet.</td></tr>`}${addStepRow}</tbody>
+    </table>
+  </div>`;
+}
+
+function subprocessStepActionButtons(spId, stepId){
+  return `<button class="btn btn-ghost btn-sm" onclick="openSubStepEdit('${spId}','${stepId}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
+  <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteSubStep('${spId}','${stepId}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
+}
+
+function rulesSettingsTableHTML(){
+  const rowsHtml = roRulesRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.rule_text)}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'rorules')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Rule</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="2" class="empty-hint">No rules yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderProcessSettings(){
+  const subTabs = [
+    { key:'lifecycle', label:'Life Cycle', addFn:'openLifecycleAdd' },
+    { key:'subprocesses', label:'Sub-processes', addFn:'openSubprocessAdd' },
+    { key:'rules', label:'Rules', addFn:'openRuleAdd' },
+  ];
+  const active = subTabs.find(t => t.key === processSettingsSubTab) || subTabs[0];
+
+  let content, isDemo, endpoint;
+  if(processSettingsSubTab === 'subprocesses'){
+    content = subprocessRows.map(sp => subprocessSettingsCardHTML(sp)).join('') || `<div class="table-wrap"><div class="empty-hint">No sub-processes yet.</div></div>`;
+    isDemo = usingDemoDataSubprocesses; endpoint = 'subprocesses';
+  } else if(processSettingsSubTab === 'rules'){
+    content = rulesSettingsTableHTML();
+    isDemo = usingDemoDataRules; endpoint = 'rorules';
+  } else {
+    content = lifecycleSettingsTableHTML();
+    isDemo = usingDemoDataLifecycle; endpoint = 'lifecycle';
+  }
+
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="${active.addFn}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add ${processSettingsSubTab === 'subprocesses' ? 'sub-process' : 'row'}</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    <div class="settings-tabs settings-tabs-sub">
+      ${subTabs.map(t => `<button class="settings-tab${processSettingsSubTab === t.key ? ' active' : ''}" onclick="switchProcessSettingsSubTab('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    ${demoBanner(isDemo, endpoint)}
+    ${content}
+  `;
+}
+
 function mmSettingsTableHTML(){
   const typeLabels = { main:'Main code', checklist:'Checklist item', sub:'Number code' };
   const rowsHtml = mmRows.map(r => `<tr class="row-item">
@@ -1240,6 +1525,11 @@ async function render(){
     if(phoneRows.length === 0) await loadPhones();
     if(huntGroupRows.length === 0) await loadHuntGroups();
     main.innerHTML = renderPhonesPage();
+  } else if(currentPage === 'process'){
+    if(lifecycleRows.length === 0) await loadLifecycle();
+    if(subprocessRows.length === 0) await loadSubprocesses();
+    if(roRulesRows.length === 0) await loadRules();
+    main.innerHTML = renderProcessPage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
     if(mmRows.length === 0) await loadMMCodes();
@@ -1249,6 +1539,9 @@ async function render(){
     if(otherFluidsRows.length === 0) await loadOtherFluids();
     if(phoneRows.length === 0) await loadPhones();
     if(huntGroupRows.length === 0) await loadHuntGroups();
+    if(lifecycleRows.length === 0) await loadLifecycle();
+    if(subprocessRows.length === 0) await loadSubprocesses();
+    if(roRulesRows.length === 0) await loadRules();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -1493,6 +1786,10 @@ function handleModalSave(){
   else if(editingTable === 'fluidparts') saveFluidPartRow();
   else if(editingTable === 'phones') savePhoneRow();
   else if(editingTable === 'huntgroups') saveHuntGroupRow();
+  else if(editingTable === 'lifecycle') saveLifecycleRow();
+  else if(editingTable === 'subprocess') saveSubprocessRow();
+  else if(editingTable === 'subprocessStep') saveSubStepRow();
+  else if(editingTable === 'rorules') saveRuleRow();
   else saveRow();
 }
 
@@ -2162,6 +2459,300 @@ async function deleteHuntGroupRow(id){
   huntGroupRows = huntGroupRows.filter(r => r.id !== id);
   if(!usingDemoDataHuntGroups){
     try{ await fetch(`${CONFIG.API_BASE}/huntgroups/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Life Cycle Steps CRUD ---------- */
+function emptyLifecycleRow(){
+  return { phase:'', role: ROLE_ORDER[0], step_text:'' };
+}
+
+function openLifecycleAdd(){
+  editingId = null;
+  editingTable = 'lifecycle';
+  document.getElementById('modalTitle').textContent = 'Add life cycle step';
+  document.getElementById('modalBody').innerHTML = lifecycleModalFormHTML(emptyLifecycleRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openLifecycleEdit(id){
+  const row = lifecycleRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'lifecycle';
+  document.getElementById('modalTitle').textContent = 'Edit life cycle step';
+  document.getElementById('modalBody').innerHTML = lifecycleModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function lifecycleModalFormHTML(r){
+  const roleOptions = ROLE_ORDER.map(role => `<option value="${role}" ${r.role === role ? 'selected':''}>${role}</option>`).join('');
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Phase</label>
+        <input type="text" id="lc_phase" value="${escapeAttr(r.phase)}" placeholder="e.g. Intake & Scheduling">
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="lc_role">${roleOptions}</select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Step</label>
+        <textarea id="lc_step_text" placeholder="What happens in this step">${escapeHtml(r.step_text||'')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+async function saveLifecycleRow(){
+  const payload = {
+    phase: document.getElementById('lc_phase').value.trim(),
+    role: document.getElementById('lc_role').value,
+    step_text: document.getElementById('lc_step_text').value.trim(),
+  };
+  if(!payload.phase || !payload.step_text){
+    alert('Phase and step text are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(lifecycleRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataLifecycle){
+      try{ await fetch(`${CONFIG.API_BASE}/lifecycle/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (lifecycleRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    lifecycleRows.push(newRow);
+    if(!usingDemoDataLifecycle){
+      try{ await fetch(`${CONFIG.API_BASE}/lifecycle`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteLifecycleRow(id){
+  if(!confirm('Delete this step? This can\'t be undone.')) return;
+  lifecycleRows = lifecycleRows.filter(r => r.id !== id);
+  if(!usingDemoDataLifecycle){
+    try{ await fetch(`${CONFIG.API_BASE}/lifecycle/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Sub-processes CRUD ---------- */
+function emptySubprocess(){
+  return { name:'', subtitle:'' };
+}
+
+function openSubprocessAdd(){
+  editingId = null;
+  editingTable = 'subprocess';
+  document.getElementById('modalTitle').textContent = 'Add sub-process';
+  document.getElementById('modalBody').innerHTML = subprocessModalFormHTML(emptySubprocess());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openSubprocessEdit(id){
+  const sp = subprocessRows.find(r => r.id === id);
+  if(!sp) return;
+  editingId = id;
+  editingTable = 'subprocess';
+  document.getElementById('modalTitle').textContent = 'Edit sub-process';
+  document.getElementById('modalBody').innerHTML = subprocessModalFormHTML(sp);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function subprocessModalFormHTML(sp){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Name</label>
+        <input type="text" id="sp_name" value="${escapeAttr(sp.name)}" placeholder="e.g. Active Write-Up Process">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Subtitle</label>
+        <input type="text" id="sp_subtitle" value="${escapeAttr(sp.subtitle)}" placeholder="Optional">
+      </div>
+    </div>
+  `;
+}
+
+async function saveSubprocessRow(){
+  const payload = {
+    name: document.getElementById('sp_name').value.trim(),
+    subtitle: type_or_null(document.getElementById('sp_subtitle').value),
+  };
+  if(!payload.name){
+    alert('Name is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(subprocessRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataSubprocesses){
+      try{ await fetch(`${CONFIG.API_BASE}/subprocesses/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (subprocessRows.at(-1)?.sort_order || 0) + 10, ro_subprocess_steps: [], ...payload };
+    subprocessRows.push(newRow);
+    if(!usingDemoDataSubprocesses){
+      try{ await fetch(`${CONFIG.API_BASE}/subprocesses`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteSubprocessRow(id){
+  if(!confirm('Delete this sub-process and all of its steps? This can\'t be undone.')) return;
+  subprocessRows = subprocessRows.filter(r => r.id !== id);
+  if(!usingDemoDataSubprocesses){
+    try{ await fetch(`${CONFIG.API_BASE}/subprocesses/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+function emptySubStep(){
+  return { step_text:'' };
+}
+
+function openSubStepAdd(subprocessId){
+  editingId = null;
+  editingTable = 'subprocessStep';
+  editingSubprocessId = subprocessId;
+  document.getElementById('modalTitle').textContent = 'Add step';
+  document.getElementById('modalBody').innerHTML = subStepModalFormHTML(emptySubStep());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openSubStepEdit(subprocessId, stepId){
+  const sp = subprocessRows.find(r => r.id === subprocessId);
+  const step = sp && (sp.ro_subprocess_steps || []).find(s => s.id === stepId);
+  if(!step) return;
+  editingId = stepId;
+  editingTable = 'subprocessStep';
+  editingSubprocessId = subprocessId;
+  document.getElementById('modalTitle').textContent = 'Edit step';
+  document.getElementById('modalBody').innerHTML = subStepModalFormHTML(step);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function subStepModalFormHTML(s){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Step</label>
+        <textarea id="ss_step_text" placeholder="What happens in this step">${escapeHtml(s.step_text||'')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+async function saveSubStepRow(){
+  const sp = subprocessRows.find(r => r.id === editingSubprocessId);
+  if(!sp) return;
+  const payload = { step_text: document.getElementById('ss_step_text').value.trim() };
+  if(!payload.step_text){
+    alert('Step text is required.');
+    return;
+  }
+  if(!sp.ro_subprocess_steps) sp.ro_subprocess_steps = [];
+
+  if(editingId){
+    Object.assign(sp.ro_subprocess_steps.find(s => s.id === editingId), payload);
+    if(!usingDemoDataSubprocesses){
+      try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newStep = { id: 'local-' + Date.now(), subprocess_id: sp.id, sort_order: (sp.ro_subprocess_steps.at(-1)?.sort_order || 0) + 10, ...payload };
+    sp.ro_subprocess_steps.push(newStep);
+    if(!usingDemoDataSubprocesses){
+      try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStep)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteSubStep(subprocessId, stepId){
+  if(!confirm('Delete this step? This can\'t be undone.')) return;
+  const sp = subprocessRows.find(r => r.id === subprocessId);
+  if(sp) sp.ro_subprocess_steps = (sp.ro_subprocess_steps || []).filter(s => s.id !== stepId);
+  if(!usingDemoDataSubprocesses){
+    try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps/${stepId}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- RO Rules CRUD ---------- */
+function emptyRule(){
+  return { rule_text:'' };
+}
+
+function openRuleAdd(){
+  editingId = null;
+  editingTable = 'rorules';
+  document.getElementById('modalTitle').textContent = 'Add rule';
+  document.getElementById('modalBody').innerHTML = ruleModalFormHTML(emptyRule());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openRuleEdit(id){
+  const row = roRulesRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'rorules';
+  document.getElementById('modalTitle').textContent = 'Edit rule';
+  document.getElementById('modalBody').innerHTML = ruleModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function ruleModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Rule</label>
+        <textarea id="rule_text" placeholder="e.g. Every Repair Order must be closed if the vehicle has transferred possession back to the customer.">${escapeHtml(r.rule_text||'')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+async function saveRuleRow(){
+  const payload = { rule_text: document.getElementById('rule_text').value.trim() };
+  if(!payload.rule_text){
+    alert('Rule text is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(roRulesRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataRules){
+      try{ await fetch(`${CONFIG.API_BASE}/rorules/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (roRulesRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    roRulesRows.push(newRow);
+    if(!usingDemoDataRules){
+      try{ await fetch(`${CONFIG.API_BASE}/rorules`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteRuleRow(id){
+  if(!confirm('Delete this rule? This can\'t be undone.')) return;
+  roRulesRows = roRulesRows.filter(r => r.id !== id);
+  if(!usingDemoDataRules){
+    try{ await fetch(`${CONFIG.API_BASE}/rorules/${id}`, {method:'DELETE'}); }catch(e){}
   }
   render();
 }
