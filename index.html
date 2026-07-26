@@ -152,6 +152,34 @@
   .mm-checklist-item svg{width:15px; height:15px; margin-top:2px; color:var(--steel); flex-shrink:0;}
   .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
 
+  /* ---------- oil application guide ---------- */
+  .oil-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
+  .oil-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
+  .oil-swatch{width:12px; height:12px; border-radius:3px; display:inline-block;}
+  .oil-swatch.oil-30{background:#7A5A2E;}
+  .oil-swatch.oil-20{background:#1F3A54;}
+  .oil-swatch.oil-0{background:#1F4A32;}
+  .oil-swatch.oil-alt-swatch{background:#4A4326; border:1px dashed #C9B25A;}
+  .oil-matrix-wrap{overflow-x:auto; margin-bottom:26px;}
+  table.oil-matrix{table-layout:fixed; min-width:1100px;}
+  .oil-model-col{position:sticky; left:0; background:var(--card); width:150px; min-width:150px; text-align:left; font-weight:500; z-index:1;}
+  thead .oil-model-col{background:#1A1B1D; z-index:2;}
+  .oil-year-col{width:64px; text-align:center;}
+  td.oil-cell{padding:6px 4px; text-align:center; border-bottom:1px solid var(--border); border-left:1px solid var(--border);}
+  td.oil-empty{background:transparent;}
+  td.oil-cell.oil-30{background:#3A2C16;}
+  td.oil-cell.oil-20{background:#122336;}
+  td.oil-cell.oil-0{background:#122A1C;}
+  .oil-primary{font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink);}
+  .oil-alt{font-family:var(--mono); font-size:9.5px; color:#D9C56E; margin-top:2px;}
+  .verify-badge{
+    font-family:var(--mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--amber); border:1px solid #5C441C; background:var(--amber-light); padding:2px 6px; border-radius:10px;
+  }
+  .fluid-dot{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px; vertical-align:middle;}
+  .settings-tabs-sub{margin-top:-8px; margin-bottom:16px; border-bottom:1px solid var(--border);}
+  .settings-tabs-sub .settings-tab{font-size:12px; margin-right:14px; padding:6px 4px;}
+
   /* ---------- vendors page ---------- */
   .vendor-card{margin-bottom:18px;}
   .vendor-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 16px 14px; border-bottom:1px solid var(--border);}
@@ -286,7 +314,7 @@ const PAGES = [
   { id:'pricing',   label:'Pricing Guide',            icon:'tag',      ready:true  },
   { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
-  { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:false },
+  { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
   { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:false },
   { id:'process',   label:'Process Board',             icon:'flow',     ready:false },
   { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:false },
@@ -311,13 +339,20 @@ let currentPage = 'pricing';
 let usingDemoData = false;
 let usingDemoDataMM = false;
 let usingDemoDataVendors = false;
+let usingDemoDataOilGuide = false;
+let usingDemoDataOtherFluids = false;
+let usingDemoDataFluidParts = false;
 let pricingRows = [];
 let mmRows = [];
 let vendorRows = [];
+let engineOilRows = [];
+let otherFluidsRows = [];
+let fluidPartsRows = [];
 let editingId = null;
 let editingTable = 'pricing';
 let editingVendorId = null;
 let settingsTab = 'pricing';
+let oilSettingsSubTab = 'engine';
 let searchMatches = [];
 let searchIndex = -1;
 
@@ -351,6 +386,10 @@ function goTo(pageId){
   const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main", "code_label": "A or B", "description": "Replace Engine Oil & Oil Filter.", "time_estimate": null}, {"id": "mmseed-20", "sort_order": 20, "code_type": "checklist", "code_label": null, "description": "Check front and rear brakes. Check brake pads and disc thickness. Check for damage. Check calipers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-30", "sort_order": 30, "code_type": "checklist", "code_label": null, "description": "Check Parking Brake Adjustment.", "time_estimate": null}, {"id": "mmseed-40", "sort_order": 40, "code_type": "checklist", "code_label": null, "description": "Inspect Tie-Rod Ends, Steering Gearbox & Gearbox Boots.", "time_estimate": null}, {"id": "mmseed-50", "sort_order": 50, "code_type": "checklist", "code_label": null, "description": "Check steering linkage.", "time_estimate": null}, {"id": "mmseed-60", "sort_order": 60, "code_type": "checklist", "code_label": null, "description": "Check Boots for Damage and Leaking Grease.", "time_estimate": null}, {"id": "mmseed-70", "sort_order": 70, "code_type": "checklist", "code_label": null, "description": "Inspect Suspension Components.", "time_estimate": null}, {"id": "mmseed-80", "sort_order": 80, "code_type": "checklist", "code_label": null, "description": "Check Condition of Ball Joint Boots for Deterioration, Damage & Tightness.", "time_estimate": null}, {"id": "mmseed-90", "sort_order": 90, "code_type": "checklist", "code_label": null, "description": "Inspect Driveshaft Boots.", "time_estimate": null}, {"id": "mmseed-100", "sort_order": 100, "code_type": "checklist", "code_label": null, "description": "Inspect Brake Hoses & Lines, Including VSA Lines.", "time_estimate": null}, {"id": "mmseed-110", "sort_order": 110, "code_type": "checklist", "code_label": null, "description": "Check Brake Master Cylinder & VSA Modulator-Control Unit for Damage or Leakage.", "time_estimate": null}, {"id": "mmseed-120", "sort_order": 120, "code_type": "checklist", "code_label": null, "description": "Inspect All Fluid Levels & Condition of Fluids. Including: Engine Coolant, Brake Fluid, Windshield Washer Fluid, Power Steering Fluid(if applicable).", "time_estimate": null}, {"id": "mmseed-130", "sort_order": 130, "code_type": "checklist", "code_label": null, "description": "Check catalytic converter heat shields. Check Exhaust Pipes. Check mufflers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-140", "sort_order": 140, "code_type": "checklist", "code_label": null, "description": "Inspect Fuel Lines & Connections.", "time_estimate": null}, {"id": "mmseed-150", "sort_order": 150, "code_type": "checklist", "code_label": null, "description": "Inspect Engine Air Cleaner Filter.", "time_estimate": null}, {"id": "mmseed-160", "sort_order": 160, "code_type": "checklist", "code_label": null, "description": "Inspect Cabin(HVAC) Filter.", "time_estimate": null}, {"id": "mmseed-1010", "sort_order": 1010, "code_type": "sub", "code_label": "1.0", "description": "Rotate Tires(if needed), Check Tire Inflation & Condition.", "time_estimate": "45 MINS - 1 HR"}, {"id": "mmseed-1020", "sort_order": 1020, "code_type": "sub", "code_label": "2.0", "description": "Replace Engine Air Cleaner Filter, Replace Cabin(HVAC) Filter.", "time_estimate": "N/A Replace on as-need basis (Inspection of filters included in A or B services)"}, {"id": "mmseed-1030", "sort_order": 1030, "code_type": "sub", "code_label": "3.0", "description": "Replace Transmission Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1040", "sort_order": 1040, "code_type": "sub", "code_label": "4.0", "description": "Replace Engine Spark Plugs, Replace Engine Valve Cover Gasket, Adjust Engine Valves, Replace Water Pump. For Vehicles Equipped with Timing Belt Add: Replace Timing Belt & Timing Belt Tensioner.", "time_estimate": "NEED CAR ALL DAY. Always confirm parts in-stock prior to customer arrival."}, {"id": "mmseed-1050", "sort_order": 1050, "code_type": "sub", "code_label": "5.0", "description": "Replace Engine Coolant.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1060", "sort_order": 1060, "code_type": "sub", "code_label": "6.0", "description": "Replace Rear Differential Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1070", "sort_order": 1070, "code_type": "sub", "code_label": "7.0", "description": "Replace Brake Fluid.", "time_estimate": "ADD 1 HR"}];
 
 const SEED_DATA_VENDORS = [{"id": "vseed-10", "sort_order": 10, "name": null, "phone": null, "lead_time": null, "notes": null, "vendor_services": [{"id": "vsseed-10", "vendor_id": "vseed-10", "sort_order": 10, "service": "Full Vehicle Detail", "cost": 210.0, "customer_price": 262.5}, {"id": "vsseed-20", "vendor_id": "vseed-10", "sort_order": 20, "service": "Interior Only Detail", "cost": 120.0, "customer_price": 150.0}, {"id": "vsseed-30", "vendor_id": "vseed-10", "sort_order": 30, "service": "Exterior Only Detail", "cost": 120.0, "customer_price": 150.0}]}, {"id": "vseed-20", "sort_order": 20, "name": null, "phone": "360-557-8016", "lead_time": "2 day lead time", "notes": null, "vendor_services": [{"id": "vsseed-40", "vendor_id": "vseed-20", "sort_order": 10, "service": "Glass Installation", "cost": 159.0, "customer_price": 198.75}, {"id": "vsseed-50", "vendor_id": "vseed-20", "sort_order": 20, "service": "Pre-collision System Calibration", "cost": 252.75, "customer_price": 315.94}]}];
+
+const SEED_DATA_OILGUIDE = [{"id": "oilseed-10", "sort_order": 10, "model": "Accord L4 & V6", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": false}, {"id": "oilseed-20", "sort_order": 20, "model": "Accord L4 & V6", "year_start": 2001, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-30", "sort_order": 30, "model": "Accord L4 & V6", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-40", "sort_order": 40, "model": "Accord Hybrid", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-50", "sort_order": 50, "model": "Civic", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": false}, {"id": "oilseed-60", "sort_order": 60, "model": "Civic", "year_start": 2001, "year_end": 2010, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2010, "verified": false}, {"id": "oilseed-70", "sort_order": 70, "model": "Civic", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-80", "sort_order": 80, "model": "Civic GX", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-90", "sort_order": 90, "model": "Civic GX", "year_start": 2002, "year_end": 2013, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-100", "sort_order": 100, "model": "Civic Hybrid", "year_start": 2006, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-110", "sort_order": 110, "model": "Civic Si", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-120", "sort_order": 120, "model": "Civic Si", "year_start": 2001, "year_end": 2004, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-130", "sort_order": 130, "model": "Civic Si", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-140", "sort_order": 140, "model": "Civic Si", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-150", "sort_order": 150, "model": "Crosstour", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-160", "sort_order": 160, "model": "CR-V", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-170", "sort_order": 170, "model": "CR-V", "year_start": 2002, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-180", "sort_order": 180, "model": "CR-V", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-190", "sort_order": 190, "model": "CR-Z", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-200", "sort_order": 200, "model": "Element", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-210", "sort_order": 210, "model": "Element", "year_start": 2010, "year_end": 2011, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-220", "sort_order": 220, "model": "Fit", "year_start": 2007, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2008, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-230", "sort_order": 230, "model": "Fit", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-240", "sort_order": 240, "model": "Insight", "year_start": 2000, "year_end": 2006, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-250", "sort_order": 250, "model": "Insight", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-260", "sort_order": 260, "model": "Odyssey", "year_start": 1999, "year_end": 2004, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-270", "sort_order": 270, "model": "Odyssey", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-280", "sort_order": 280, "model": "Odyssey", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-290", "sort_order": 290, "model": "Pilot", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-300", "sort_order": 300, "model": "Pilot", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-310", "sort_order": 310, "model": "Ridgeline", "year_start": 2006, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2006, "alt_year_end": 2009, "verified": false}, {"id": "oilseed-320", "sort_order": 320, "model": "Ridgeline", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}, {"id": "oilseed-330", "sort_order": 330, "model": "S2000", "year_start": 1999, "year_end": 2009, "oil_weight": "10W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": false}];
+const SEED_DATA_FLUIDPARTS = [{"id": "fpseed-10", "sort_order": 10, "fluid_name": "ATF-DW1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9008", "color_hex": "#1E6FD9", "notes": null, "verified": true}, {"id": "fpseed-20", "sort_order": 20, "fluid_name": "ATF-Type 2.0", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9015*", "color_hex": "#E8C93A", "notes": "Asterisk footnote on the source chart \u2014 confirm applicability", "verified": false}, {"id": "fpseed-30", "sort_order": 30, "fluid_name": "ATF-Type 3.1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9017", "color_hex": "#C23A8B", "notes": null, "verified": true}, {"id": "fpseed-40", "sort_order": 40, "fluid_name": "CVT Fluid", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9006", "color_hex": "#4C6B2F", "notes": null, "verified": true}, {"id": "fpseed-50", "sort_order": 50, "fluid_name": "HCF-2", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-HCF2", "color_hex": "#D9A61E", "notes": null, "verified": true}, {"id": "fpseed-60", "sort_order": 60, "fluid_name": "MTF", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08798-9031", "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-70", "sort_order": 70, "fluid_name": "Dual Pump Fluid (DPSF II)", "fluid_category": "Rear Differential", "container": "Quart", "part_number": "08200-9007", "color_hex": "#C1622A", "notes": null, "verified": true}, {"id": "fpseed-80", "sort_order": 80, "fluid_name": "VTM-4", "fluid_category": "Rear Differential", "container": "Gallon", "part_number": "08200-9014**", "color_hex": "#7FB6D9", "notes": "Double-asterisk footnote on the source chart \u2014 confirm applicability", "verified": false}, {"id": "fpseed-90", "sort_order": 90, "fluid_name": "HGO-1", "fluid_category": "Transfer Assembly Fluid", "container": "Quart", "part_number": null, "color_hex": "#9C9284", "notes": "Part number not clearly legible on the source image \u2014 needs lookup", "verified": false}, {"id": "fpseed-100", "sort_order": 100, "fluid_name": "Antifreeze/Coolant Type 2", "fluid_category": "Antifreeze/Coolant", "container": "Gallon", "part_number": "01999-9011", "color_hex": "#4F9B3E", "notes": null, "verified": true}, {"id": "fpseed-110", "sort_order": 110, "fluid_name": "DOT-3", "fluid_category": "Brake Fluid", "container": "12 fl oz", "part_number": "08798-9008", "color_hex": "#3A2E8C", "notes": null, "verified": true}, {"id": "fpseed-120", "sort_order": 120, "fluid_name": "Power Steering Fluid", "fluid_category": "Power Steering Fluid", "container": "12 fl oz", "part_number": "08206-9002", "color_hex": "#C0392B", "notes": null, "verified": true}, {"id": "fpseed-130", "sort_order": 130, "fluid_name": "Washer Concentrate/Antifreeze", "fluid_category": "Windshield Washer", "container": "16 fl oz", "part_number": "08798-9025", "color_hex": "#B3A6D9", "notes": null, "verified": true}];
+const SEED_DATA_OTHERFLUIDS = [{"id": "ofseed-10", "sort_order": 10, "model": "Accord", "trim": "E-CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": false}, {"id": "ofseed-20", "sort_order": 20, "model": "Accord", "trim": "E-CVT Trans (Plug-in)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": false}, {"id": "ofseed-30", "sort_order": 30, "model": "Accord", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2018, "year_end": null, "verified": false}, {"id": "ofseed-40", "sort_order": 40, "model": "Accord", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2017, "verified": false}, {"id": "ofseed-50", "sort_order": 50, "model": "Civic", "trim": "CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2015, "verified": false}, {"id": "ofseed-60", "sort_order": 60, "model": "Civic", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2016, "year_end": null, "verified": false}, {"id": "ofseed-70", "sort_order": 70, "model": "Crosstour", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": 2015, "verified": false}, {"id": "ofseed-80", "sort_order": 80, "model": "CR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": null, "verified": false}, {"id": "ofseed-90", "sort_order": 90, "model": "CR-Z", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2011, "year_end": 2016, "verified": false}, {"id": "ofseed-100", "sort_order": 100, "model": "Element", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": 2011, "verified": false}, {"id": "ofseed-110", "sort_order": 110, "model": "Fit", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2015, "year_end": null, "verified": false}, {"id": "ofseed-120", "sort_order": 120, "model": "HR-V", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2016, "year_end": null, "verified": false}, {"id": "ofseed-130", "sort_order": 130, "model": "HR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2016, "year_end": null, "verified": false}, {"id": "ofseed-140", "sort_order": 140, "model": "Insight", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2006, "verified": false}, {"id": "ofseed-150", "sort_order": 150, "model": "Pilot", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2016, "year_end": null, "verified": false}, {"id": "ofseed-160", "sort_order": 160, "model": "Pilot", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": null, "verified": false}, {"id": "ofseed-170", "sort_order": 170, "model": "Passport", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2019, "year_end": null, "verified": false}, {"id": "ofseed-180", "sort_order": 180, "model": "Passport", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2019, "year_end": null, "verified": false}, {"id": "ofseed-190", "sort_order": 190, "model": "Ridgeline", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2006, "year_end": null, "verified": false}, {"id": "ofseed-200", "sort_order": 200, "model": "Odyssey", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2010, "verified": false}, {"id": "ofseed-210", "sort_order": 210, "model": "Odyssey", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2018, "year_end": null, "verified": false}, {"id": "ofseed-220", "sort_order": 220, "model": "All", "trim": "Transfer Assembly", "fluid_name": "HGO-1", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-230", "sort_order": 230, "model": "All", "trim": "Manual Transmission", "fluid_name": "MTF", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-240", "sort_order": 240, "model": "All", "trim": "Non-CVT Transmission", "fluid_name": "ATF-DW1", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-250", "sort_order": 250, "model": "All", "trim": "Antifreeze", "fluid_name": "Antifreeze/Coolant Type 2", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-260", "sort_order": 260, "model": "All", "trim": "Brake Fluid", "fluid_name": "DOT-3", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-270", "sort_order": 270, "model": "All", "trim": "Power Steering Fluid", "fluid_name": "Power Steering Fluid", "year_start": null, "year_end": null, "verified": false}, {"id": "ofseed-280", "sort_order": 280, "model": "All", "trim": "Windshield Washer", "fluid_name": "Washer Concentrate/Antifreeze", "year_start": null, "year_end": null, "verified": false}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -401,6 +440,45 @@ async function loadVendors(){
   }
   vendorRows.sort((a,b) => a.sort_order - b.sort_order);
   vendorRows.forEach(v => (v.vendor_services || []).sort((a,b) => a.sort_order - b.sort_order));
+}
+
+async function loadEngineOil(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/oilguide`);
+    if(!res.ok) throw new Error('bad response');
+    engineOilRows = await res.json();
+    usingDemoDataOilGuide = false;
+  }catch(err){
+    engineOilRows = JSON.parse(JSON.stringify(SEED_DATA_OILGUIDE));
+    usingDemoDataOilGuide = true;
+  }
+  engineOilRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadOtherFluids(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/otherfluids`);
+    if(!res.ok) throw new Error('bad response');
+    otherFluidsRows = await res.json();
+    usingDemoDataOtherFluids = false;
+  }catch(err){
+    otherFluidsRows = JSON.parse(JSON.stringify(SEED_DATA_OTHERFLUIDS));
+    usingDemoDataOtherFluids = true;
+  }
+  otherFluidsRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadFluidParts(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/fluidparts`);
+    if(!res.ok) throw new Error('bad response');
+    fluidPartsRows = await res.json();
+    usingDemoDataFluidParts = false;
+  }catch(err){
+    fluidPartsRows = JSON.parse(JSON.stringify(SEED_DATA_FLUIDPARTS));
+    usingDemoDataFluidParts = true;
+  }
+  fluidPartsRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
 function fmtMoney(v){
@@ -455,12 +533,19 @@ function pricingTableHTML(editable){
   </table></div>`;
 }
 
+const TABLE_ACTIONS = {
+  pricing:      { edit: 'openEdit',           delete: 'deleteRow' },
+  mmcodes:      { edit: 'openMMEdit',         delete: 'deleteMMRow' },
+  vendor:       { edit: 'openVendorEdit',     delete: 'deleteVendorRow' },
+  oilguide:     { edit: 'openOilEdit',        delete: 'deleteOilRow' },
+  otherfluids:  { edit: 'openOtherFluidEdit', delete: 'deleteOtherFluidRow' },
+  fluidparts:   { edit: 'openFluidPartEdit',  delete: 'deleteFluidPartRow' },
+};
+
 function actionButtons(id, table){
-  table = table || 'pricing';
-  const editFn = table === 'mmcodes' ? 'openMMEdit' : table === 'vendor' ? 'openVendorEdit' : 'openEdit';
-  const deleteFn = table === 'mmcodes' ? 'deleteMMRow' : table === 'vendor' ? 'deleteVendorRow' : 'deleteRow';
-  return `<button class="btn btn-ghost btn-sm" onclick="${editFn}('${id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
-  <button class="btn btn-ghost btn-sm btn-danger" onclick="${deleteFn}('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
+  const actions = TABLE_ACTIONS[table || 'pricing'] || TABLE_ACTIONS.pricing;
+  return `<button class="btn btn-ghost btn-sm" onclick="${actions.edit}('${id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
+  <button class="btn btn-ghost btn-sm btn-danger" onclick="${actions.delete}('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
 }
 
 function demoBanner(isDemo, endpointPath){
@@ -622,12 +707,127 @@ function renderVendorsSettings(){
 }
 
 /* ================================================================
+   PAGE: Oil Application Guide
+   ================================================================ */
+const OIL_YEARS = Array.from({length: 2013 - 1999 + 1}, (_, i) => 1999 + i);
+
+function oilWeightClass(weight){
+  if(weight === '5W-30' || weight === '10W-30') return 'oil-30';
+  if(weight === '5W-20') return 'oil-20';
+  if(weight === '0W-20') return 'oil-0';
+  return 'oil-other';
+}
+
+function verifyBadge(row){
+  return row.verified ? '' : `<span class="verify-badge" title="Not yet checked against the source guide">unverified</span>`;
+}
+
+function engineOilMatrixHTML(){
+  const byModel = new Map();
+  engineOilRows.forEach(r => {
+    if(!byModel.has(r.model)) byModel.set(r.model, []);
+    byModel.get(r.model).push(r);
+  });
+
+  const headerRow = `<tr><th class="oil-model-col">Honda models</th>${OIL_YEARS.map(y => `<th class="oil-year-col">${y}</th>`).join('')}</tr>`;
+
+  const bodyRows = Array.from(byModel.entries()).map(([model, segments]) => {
+    const cells = OIL_YEARS.map(year => {
+      const seg = segments.find(s => year >= s.year_start && year <= s.year_end);
+      if(!seg) return `<td class="oil-cell oil-empty"></td>`;
+      const hasAlt = seg.alt_weight && seg.alt_year_start && year >= seg.alt_year_start && year <= seg.alt_year_end;
+      return `<td class="oil-cell ${oilWeightClass(seg.oil_weight)}">
+        <div class="oil-primary">${escapeHtml(seg.oil_weight)}</div>
+        ${hasAlt ? `<div class="oil-alt">${escapeHtml(seg.alt_weight)} OK</div>` : ''}
+      </td>`;
+    }).join('');
+    return `<tr><td class="oil-model-col">${escapeHtml(model)}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<div class="table-wrap oil-matrix-wrap"><table class="oil-matrix">
+    <thead>${headerRow}</thead>
+    <tbody>${bodyRows || `<tr><td colspan="${OIL_YEARS.length+1}" class="empty-hint">No engine oil data yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function oilLegendHTML(){
+  return `<div class="oil-legend">
+    <span class="oil-legend-item"><span class="oil-swatch oil-30"></span>5W-30 / 10W-30</span>
+    <span class="oil-legend-item"><span class="oil-swatch oil-20"></span>5W-20</span>
+    <span class="oil-legend-item"><span class="oil-swatch oil-0"></span>0W-20</span>
+    <span class="oil-legend-item"><span class="oil-swatch oil-alt-swatch"></span>Acceptable alternate</span>
+  </div>`;
+}
+
+function fluidColorDot(hex){
+  return hex ? `<span class="fluid-dot" style="background:${hex}"></span>` : '';
+}
+
+function otherFluidsTableHTML(){
+  const partsByName = {};
+  fluidPartsRows.forEach(p => partsByName[p.fluid_name] = p);
+  const rowsHtml = otherFluidsRows.map(r => {
+    const part = partsByName[r.fluid_name];
+    const years = r.year_start ? `${r.year_start}${r.year_end ? '–' + r.year_end : '+'}` : 'All years';
+    return `<tr class="row-item">
+      <td>${escapeHtml(r.model)}</td>
+      <td>${escapeHtml(r.trim)}</td>
+      <td>${fluidColorDot(part?.color_hex)}${escapeHtml(r.fluid_name)}</td>
+      <td>${years}</td>
+      <td>${verifyBadge(r)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Trim</th><th>Fluid</th><th style="width:90px">Years</th><th style="width:90px"></th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function fluidPartsTableHTML(){
+  const rowsHtml = fluidPartsRows.map(r => `<tr class="row-item">
+    <td>${fluidColorDot(r.color_hex)}${escapeHtml(r.fluid_name)}</td>
+    <td>${escapeHtml(r.fluid_category)}</td>
+    <td>${escapeHtml(r.container)}</td>
+    <td class="mono">${r.part_number ? escapeHtml(r.part_number) : '—'}</td>
+    <td>${verifyBadge(r)}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Fluid</th><th style="width:150px">Type</th><th style="width:90px">Container</th><th style="width:120px">Part number</th><th style="width:90px"></th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderOilGuidePage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Oil application guide</h2>
+        <div class="desc">Engine oil by model and year, transmission/differential/other fluids by trim, and OEM part numbers.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataOilGuide, 'oilguide')}
+    <div class="banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      This page was transcribed from a printed reference chart and hasn't been fully verified — cross-check exact model years against the source guide before quoting a customer, especially near transition years. Rows marked <span class="verify-badge" style="margin:0 2px;">unverified</span> haven't been checked yet.
+    </div>
+    <div class="section-label">Engine oil application guide</div>
+    ${oilLegendHTML()}
+    ${engineOilMatrixHTML()}
+    <div class="section-label">Transmission &amp; other fluids by model</div>
+    ${otherFluidsTableHTML()}
+    <div class="section-label">Fluid part numbers</div>
+    ${fluidPartsTableHTML()}
+  `;
+}
+
+/* ================================================================
    PAGE: Settings
    ================================================================ */
 const SETTINGS_TABLE_META = {
   pricing: { label: 'Pricing Guide' },
   mmcodes: { label: 'Maintenance Minder Codes' },
   vendors: { label: 'Vendors' },
+  oilguide: { label: 'Oil Application Guide' },
 };
 
 function settingsTabsHTML(){
@@ -658,6 +858,9 @@ function renderSettingsPage(){
   if(settingsTab === 'vendors'){
     return renderVendorsSettings();
   }
+  if(settingsTab === 'oilguide'){
+    return renderOilGuideSettings();
+  }
   return `
     <div class="topbar">
       <div>
@@ -677,6 +880,99 @@ function renderSettingsPage(){
 function switchSettingsTab(tab){
   settingsTab = tab;
   render();
+}
+
+function switchOilSettingsSubTab(tab){
+  oilSettingsSubTab = tab;
+  render();
+}
+
+function verifiedToggleButton(row, table){
+  const fn = table === 'oilguide' ? 'toggleOilVerified' : table === 'otherfluids' ? 'toggleOtherFluidVerified' : 'toggleFluidPartVerified';
+  return `<button class="btn btn-ghost btn-sm" onclick="${fn}('${row.id}')" title="${row.verified ? 'Mark unverified' : 'Mark verified'}">
+    ${row.verified
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px; color:var(--steel)"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px; color:var(--ink-faint)"><circle cx="12" cy="12" r="9"/></svg>`}
+  </button>`;
+}
+
+function oilGuideSettingsTableHTML(){
+  const rowsHtml = engineOilRows.map(r => {
+    const alt = r.alt_weight ? `${escapeHtml(r.alt_weight)} OK (${r.alt_year_start}-${r.alt_year_end})` : '';
+    return `<tr class="row-item">
+      <td>${escapeHtml(r.model)}</td>
+      <td class="mono">${r.year_start}-${r.year_end}</td>
+      <td>${escapeHtml(r.oil_weight)}</td>
+      <td class="mm-time-cell">${alt}</td>
+      <td class="actions-cell">${verifiedToggleButton(r, 'oilguide')}${actionButtons(r.id, 'oilguide')}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th style="width:90px">Years</th><th style="width:80px">Oil</th><th>Alt / acceptable</th><th class="num" style="width:110px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function otherFluidsSettingsTableHTML(){
+  const rowsHtml = otherFluidsRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.model)}</td>
+    <td>${escapeHtml(r.trim)}</td>
+    <td>${escapeHtml(r.fluid_name)}</td>
+    <td class="mono">${r.year_start || ''}${r.year_end ? '-' + r.year_end : (r.year_start ? '+' : '')}</td>
+    <td class="actions-cell">${verifiedToggleButton(r, 'otherfluids')}${actionButtons(r.id, 'otherfluids')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Trim</th><th>Fluid</th><th style="width:90px">Years</th><th class="num" style="width:110px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function fluidPartsSettingsTableHTML(){
+  const rowsHtml = fluidPartsRows.map(r => `<tr class="row-item">
+    <td>${fluidColorDot(r.color_hex)}${escapeHtml(r.fluid_name)}</td>
+    <td>${escapeHtml(r.fluid_category)}</td>
+    <td>${escapeHtml(r.container)}</td>
+    <td class="mono">${r.part_number ? escapeHtml(r.part_number) : ''}</td>
+    <td class="actions-cell">${verifiedToggleButton(r, 'fluidparts')}${actionButtons(r.id, 'fluidparts')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Fluid</th><th style="width:150px">Type</th><th style="width:90px">Container</th><th style="width:120px">Part number</th><th class="num" style="width:110px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderOilGuideSettings(){
+  const subTabs = [
+    { key:'engine', label:'Engine Oil', addFn:'openOilAdd' },
+    { key:'other', label:'Other Fluids', addFn:'openOtherFluidAdd' },
+    { key:'parts', label:'Part Numbers', addFn:'openFluidPartAdd' },
+  ];
+  const active = subTabs.find(t => t.key === oilSettingsSubTab) || subTabs[0];
+  const content = oilSettingsSubTab === 'other' ? otherFluidsSettingsTableHTML()
+    : oilSettingsSubTab === 'parts' ? fluidPartsSettingsTableHTML()
+    : oilGuideSettingsTableHTML();
+  const isDemo = oilSettingsSubTab === 'other' ? usingDemoDataOtherFluids
+    : oilSettingsSubTab === 'parts' ? usingDemoDataFluidParts
+    : usingDemoDataOilGuide;
+  const endpoint = oilSettingsSubTab === 'other' ? 'otherfluids' : oilSettingsSubTab === 'parts' ? 'fluidparts' : 'oilguide';
+
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="${active.addFn}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    <div class="settings-tabs settings-tabs-sub">
+      ${subTabs.map(t => `<button class="settings-tab${oilSettingsSubTab === t.key ? ' active' : ''}" onclick="switchOilSettingsSubTab('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    ${demoBanner(isDemo, endpoint)}
+    ${content}
+  `;
 }
 
 function mmSettingsTableHTML(){
@@ -724,10 +1020,18 @@ async function render(){
   } else if(currentPage === 'vendors'){
     if(vendorRows.length === 0) await loadVendors();
     main.innerHTML = renderVendorsPage();
+  } else if(currentPage === 'oilguide'){
+    if(engineOilRows.length === 0) await loadEngineOil();
+    if(fluidPartsRows.length === 0) await loadFluidParts();
+    if(otherFluidsRows.length === 0) await loadOtherFluids();
+    main.innerHTML = renderOilGuidePage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
     if(mmRows.length === 0) await loadMMCodes();
     if(vendorRows.length === 0) await loadVendors();
+    if(engineOilRows.length === 0) await loadEngineOil();
+    if(fluidPartsRows.length === 0) await loadFluidParts();
+    if(otherFluidsRows.length === 0) await loadOtherFluids();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -962,6 +1266,9 @@ function handleModalSave(){
   if(editingTable === 'mmcodes') saveMMRow();
   else if(editingTable === 'vendor') saveVendorRow();
   else if(editingTable === 'vendorService') saveServiceRow();
+  else if(editingTable === 'oilguide') saveOilRow();
+  else if(editingTable === 'otherfluids') saveOtherFluidRow();
+  else if(editingTable === 'fluidparts') saveFluidPartRow();
   else saveRow();
 }
 
@@ -1127,6 +1434,345 @@ async function deleteServiceRow(vendorId, serviceId){
   if(vendor) vendor.vendor_services = (vendor.vendor_services || []).filter(s => s.id !== serviceId);
   if(!usingDemoDataVendors){
     try{ await fetch(`${CONFIG.API_BASE}/vendor-services/${serviceId}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Engine Oil Guide CRUD ---------- */
+function emptyOilRow(){
+  return { model:'', year_start:'', year_end:'', oil_weight:'', alt_weight:'', alt_year_start:'', alt_year_end:'', verified:false };
+}
+
+function openOilAdd(){
+  editingId = null;
+  editingTable = 'oilguide';
+  document.getElementById('modalTitle').textContent = 'Add engine oil row';
+  document.getElementById('modalBody').innerHTML = oilModalFormHTML(emptyOilRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openOilEdit(id){
+  const row = engineOilRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'oilguide';
+  document.getElementById('modalTitle').textContent = 'Edit engine oil row';
+  document.getElementById('modalBody').innerHTML = oilModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function oilModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Model</label>
+        <input type="text" id="o_model" value="${escapeAttr(r.model)}" placeholder="e.g. Accord L4 & V6">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Year start</label>
+        <input type="number" id="o_year_start" value="${r.year_start ?? ''}" placeholder="1999">
+      </div>
+      <div class="field">
+        <label>Year end</label>
+        <input type="number" id="o_year_end" value="${r.year_end ?? ''}" placeholder="2000">
+      </div>
+      <div class="field">
+        <label>Oil weight</label>
+        <input type="text" id="o_oil_weight" value="${escapeAttr(r.oil_weight)}" placeholder="e.g. 5W-20">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Alt / acceptable weight</label>
+        <input type="text" id="o_alt_weight" value="${escapeAttr(r.alt_weight)}" placeholder="Optional, e.g. 0W-20">
+      </div>
+      <div class="field">
+        <label>Alt year start</label>
+        <input type="number" id="o_alt_year_start" value="${r.alt_year_start ?? ''}">
+      </div>
+      <div class="field">
+        <label>Alt year end</label>
+        <input type="number" id="o_alt_year_end" value="${r.alt_year_end ?? ''}">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="o_verified" ${r.verified ? 'checked':''}>
+        <label for="o_verified">Verified against the source guide</label>
+      </div>
+    </div>
+  `;
+}
+
+async function saveOilRow(){
+  const payload = {
+    model: document.getElementById('o_model').value.trim(),
+    year_start: numOrNull(document.getElementById('o_year_start').value),
+    year_end: numOrNull(document.getElementById('o_year_end').value),
+    oil_weight: document.getElementById('o_oil_weight').value.trim(),
+    alt_weight: type_or_null(document.getElementById('o_alt_weight').value),
+    alt_year_start: numOrNull(document.getElementById('o_alt_year_start').value),
+    alt_year_end: numOrNull(document.getElementById('o_alt_year_end').value),
+    verified: document.getElementById('o_verified').checked,
+  };
+  if(!payload.model || !payload.oil_weight || payload.year_start === null || payload.year_end === null){
+    alert('Model, year start/end, and oil weight are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(engineOilRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataOilGuide){
+      try{ await fetch(`${CONFIG.API_BASE}/oilguide/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (engineOilRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    engineOilRows.push(newRow);
+    if(!usingDemoDataOilGuide){
+      try{ await fetch(`${CONFIG.API_BASE}/oilguide`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteOilRow(id){
+  if(!confirm('Delete this row? This can\'t be undone.')) return;
+  engineOilRows = engineOilRows.filter(r => r.id !== id);
+  if(!usingDemoDataOilGuide){
+    try{ await fetch(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+async function toggleOilVerified(id){
+  const row = engineOilRows.find(r => r.id === id);
+  if(!row) return;
+  row.verified = !row.verified;
+  if(!usingDemoDataOilGuide){
+    try{ await fetch(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Other Fluids Guide CRUD ---------- */
+function emptyOtherFluidRow(){
+  return { model:'', trim:'', fluid_name:'', year_start:'', year_end:'', verified:false };
+}
+
+function openOtherFluidAdd(){
+  editingId = null;
+  editingTable = 'otherfluids';
+  document.getElementById('modalTitle').textContent = 'Add other fluid row';
+  document.getElementById('modalBody').innerHTML = otherFluidModalFormHTML(emptyOtherFluidRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openOtherFluidEdit(id){
+  const row = otherFluidsRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'otherfluids';
+  document.getElementById('modalTitle').textContent = 'Edit other fluid row';
+  document.getElementById('modalBody').innerHTML = otherFluidModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function otherFluidModalFormHTML(r){
+  const options = fluidPartsRows.map(p => `<option value="${escapeAttr(p.fluid_name)}" ${r.fluid_name === p.fluid_name ? 'selected':''}>${escapeHtml(p.fluid_name)}</option>`).join('');
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Model</label>
+        <input type="text" id="of_model" value="${escapeAttr(r.model)}" placeholder="e.g. CR-V">
+      </div>
+      <div class="field">
+        <label>Trim</label>
+        <input type="text" id="of_trim" value="${escapeAttr(r.trim)}" placeholder="e.g. Rear Differential">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Fluid</label>
+        <select id="of_fluid_name">${options || '<option value="">No fluids defined yet — add one under Part Numbers first</option>'}</select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Year start</label>
+        <input type="number" id="of_year_start" value="${r.year_start ?? ''}" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label>Year end</label>
+        <input type="number" id="of_year_end" value="${r.year_end ?? ''}" placeholder="Blank = ongoing">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="of_verified" ${r.verified ? 'checked':''}>
+        <label for="of_verified">Verified against the source guide</label>
+      </div>
+    </div>
+  `;
+}
+
+async function saveOtherFluidRow(){
+  const payload = {
+    model: document.getElementById('of_model').value.trim(),
+    trim: document.getElementById('of_trim').value.trim(),
+    fluid_name: document.getElementById('of_fluid_name').value,
+    year_start: numOrNull(document.getElementById('of_year_start').value),
+    year_end: numOrNull(document.getElementById('of_year_end').value),
+    verified: document.getElementById('of_verified').checked,
+  };
+  if(!payload.model || !payload.trim || !payload.fluid_name){
+    alert('Model, trim, and fluid are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(otherFluidsRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataOtherFluids){
+      try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (otherFluidsRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    otherFluidsRows.push(newRow);
+    if(!usingDemoDataOtherFluids){
+      try{ await fetch(`${CONFIG.API_BASE}/otherfluids`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteOtherFluidRow(id){
+  if(!confirm('Delete this row? This can\'t be undone.')) return;
+  otherFluidsRows = otherFluidsRows.filter(r => r.id !== id);
+  if(!usingDemoDataOtherFluids){
+    try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+async function toggleOtherFluidVerified(id){
+  const row = otherFluidsRows.find(r => r.id === id);
+  if(!row) return;
+  row.verified = !row.verified;
+  if(!usingDemoDataOtherFluids){
+    try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Fluid Part Numbers CRUD ---------- */
+function emptyFluidPart(){
+  return { fluid_name:'', fluid_category:'', container:'', part_number:'', color_hex:'#0071CE', notes:'', verified:false };
+}
+
+function openFluidPartAdd(){
+  editingId = null;
+  editingTable = 'fluidparts';
+  document.getElementById('modalTitle').textContent = 'Add fluid part number';
+  document.getElementById('modalBody').innerHTML = fluidPartModalFormHTML(emptyFluidPart());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openFluidPartEdit(id){
+  const row = fluidPartsRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'fluidparts';
+  document.getElementById('modalTitle').textContent = 'Edit fluid part number';
+  document.getElementById('modalBody').innerHTML = fluidPartModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fluidPartModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Fluid name</label>
+        <input type="text" id="fp_fluid_name" value="${escapeAttr(r.fluid_name)}" placeholder="e.g. ATF-DW1">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <input type="text" id="fp_fluid_category" value="${escapeAttr(r.fluid_category)}" placeholder="e.g. Transmission Fluid">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Container</label>
+        <input type="text" id="fp_container" value="${escapeAttr(r.container)}" placeholder="e.g. Quart">
+      </div>
+      <div class="field">
+        <label>Part number</label>
+        <input type="text" id="fp_part_number" value="${escapeAttr(r.part_number)}" placeholder="e.g. 08200-9008">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <input type="text" id="fp_color_hex" value="${escapeAttr(r.color_hex || '#0071CE')}" placeholder="#0071CE">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Notes</label>
+        <textarea id="fp_notes" placeholder="Optional">${escapeHtml(r.notes||'')}</textarea>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="checkbox-row">
+        <input type="checkbox" id="fp_verified" ${r.verified ? 'checked':''}>
+        <label for="fp_verified">Verified against the source guide</label>
+      </div>
+    </div>
+  `;
+}
+
+async function saveFluidPartRow(){
+  const payload = {
+    fluid_name: document.getElementById('fp_fluid_name').value.trim(),
+    fluid_category: document.getElementById('fp_fluid_category').value.trim(),
+    container: type_or_null(document.getElementById('fp_container').value),
+    part_number: type_or_null(document.getElementById('fp_part_number').value),
+    color_hex: type_or_null(document.getElementById('fp_color_hex').value),
+    notes: type_or_null(document.getElementById('fp_notes').value),
+    verified: document.getElementById('fp_verified').checked,
+  };
+  if(!payload.fluid_name || !payload.fluid_category){
+    alert('Fluid name and category are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(fluidPartsRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataFluidParts){
+      try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (fluidPartsRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    fluidPartsRows.push(newRow);
+    if(!usingDemoDataFluidParts){
+      try{ await fetch(`${CONFIG.API_BASE}/fluidparts`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteFluidPartRow(id){
+  if(!confirm('Delete this row? This can\'t be undone.')) return;
+  fluidPartsRows = fluidPartsRows.filter(r => r.id !== id);
+  if(!usingDemoDataFluidParts){
+    try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+async function toggleFluidPartVerified(id){
+  const row = fluidPartsRows.find(r => r.id === id);
+  if(!row) return;
+  row.verified = !row.verified;
+  if(!usingDemoDataFluidParts){
+    try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
   }
   render();
 }
