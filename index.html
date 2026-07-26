@@ -284,6 +284,12 @@
   .settings-tabs-sub .settings-tab{font-size:12px; margin-right:14px; padding:6px 4px;}
 
   /* ---------- vendors page ---------- */
+  .vendors-two-col{display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start;}
+  .vendors-col .section-label{margin-top:0;}
+
+  @media (max-width: 980px){
+    .vendors-two-col{grid-template-columns:1fr;}
+  }
   .vendor-card{margin-bottom:18px;}
   .vendor-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 16px 14px; border-bottom:1px solid var(--border);}
   .vendor-name{font-family:var(--display); font-weight:600; font-size:16px;}
@@ -1076,15 +1082,23 @@ function renderVendorsPage(){
     <div class="topbar">
       <div>
         <h2>Vendors</h2>
-        <div class="desc">Outside shops we sublet work to — cost and the price to quote the customer.</div>
+        <div class="desc">Outside shops we sublet work to, and extended warranty company logins and claim rates.</div>
       </div>
     </div>
-    ${demoBanner(usingDemoDataVendors, 'vendors')}
-    ${vendorRows.map(v => vendorCardHTML(v, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet.</div></div>`}
-    <div class="section-label">Extended warranty companies</div>
-    <div class="desc" style="margin-bottom:14px;">Account logins and claim labor rates — nudge the rate up about $10 each call; jumps past $15 tend to get held for paperwork.</div>
-    ${demoBanner(usingDemoDataWarranty, 'warrantycompanies')}
-    ${warrantyCompanyRows.map(w => warrantyCompanyCardHTML(w, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No warranty companies yet.</div></div>`}
+    <div class="vendors-two-col">
+      <div class="vendors-col">
+        <div class="section-label">Vendors</div>
+        <div class="desc" style="margin-bottom:14px;">Cost and the price to quote the customer.</div>
+        ${demoBanner(usingDemoDataVendors, 'vendors')}
+        ${vendorRows.map(v => vendorCardHTML(v, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet.</div></div>`}
+      </div>
+      <div class="vendors-col">
+        <div class="section-label">Extended warranty companies</div>
+        <div class="desc" style="margin-bottom:14px;">Nudge the rate up about $10 each call; jumps past $15 tend to get held for paperwork.</div>
+        ${demoBanner(usingDemoDataWarranty, 'warrantycompanies')}
+        ${warrantyCompanyRows.map(w => warrantyCompanyCardHTML(w, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No warranty companies yet.</div></div>`}
+      </div>
+    </div>
   `;
 }
 
