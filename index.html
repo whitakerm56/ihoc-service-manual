@@ -181,11 +181,10 @@
   .person-avatar{border-radius:50%; object-fit:cover; border:2px solid var(--border-strong); flex-shrink:0;}
   .person-avatar-initials{display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; border-style:solid; border-width:2px;}
   .person-info{display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .person-name-line{display:flex; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap;}
   .person-name{font-weight:600; font-size:13px; color:var(--ink); line-height:1.3;}
-  .person-title{font-size:11px; color:var(--ink-soft); line-height:1.3;}
-  .person-meta{display:flex; gap:4px; margin-top:2px; flex-wrap:wrap; justify-content:center;}
-  .person-meta .chip{font-size:9.5px; padding:1px 6px;}
-  .person-schedule{font-size:9.5px; color:var(--ink-faint); margin-top:2px; line-height:1.3;}
+  .person-name-line .chip{font-size:9.5px; padding:1px 6px;}
+  .person-title{font-size:11px; color:var(--ink-soft); line-height:1.3; margin-top:1px;}
 
   .org-dept-stack{width:230px;}
   .org-dept-stack-head{
@@ -198,11 +197,10 @@
   }
   .person-row{display:flex; align-items:center; gap:10px; text-align:left; padding:5px 6px;}
   .person-row-info{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .person-row-name-line{display:flex; align-items:center; gap:5px; flex-wrap:wrap;}
   .person-row-name{font-weight:600; font-size:12px; color:var(--ink); white-space:nowrap;}
-  .person-row-title{font-weight:400; color:var(--ink-soft); font-size:11px;}
-  .person-row-meta{display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:1px;}
-  .person-row-meta .chip{font-size:9px; padding:1px 5px;}
-  .person-row-schedule{font-size:9.5px; color:var(--ink-faint);}
+  .person-row-name-line .chip{font-size:9px; padding:1px 5px;}
+  .person-row-title{font-weight:400; color:var(--ink-soft); font-size:11px; margin-top:1px;}
 
   .photo-upload-row{display:flex; align-items:center; gap:14px;}
   .photo-uploading{width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--ink-faint); border:2px dashed var(--border-strong); text-align:center;}
@@ -1249,9 +1247,11 @@ function personCardHTML(emp){
   return `<div class="person-card">
     ${personAvatarHTML(emp, 64)}
     <div class="person-info">
-      <div class="person-name">${nameDisplay}</div>
+      <div class="person-name-line">
+        <span class="person-name">${nameDisplay}</span>
+        ${metaBits.join('')}
+      </div>
       <div class="person-title">${escapeHtml(emp.title)}</div>
-      ${metaBits.length ? `<div class="person-meta">${metaBits.join('')}</div>` : ''}
     </div>
   </div>`;
 }
@@ -1264,8 +1264,11 @@ function personRowCompactHTML(emp){
   return `<div class="person-row">
     ${personAvatarHTML(emp, 40)}
     <div class="person-row-info">
-      <div class="person-row-name">${nameDisplay}<span class="person-row-title"> — ${escapeHtml(emp.title)}</span></div>
-      <div class="person-row-meta">${metaBits.join('')}</div>
+      <div class="person-row-name-line">
+        <span class="person-row-name">${nameDisplay}</span>
+        ${metaBits.join('')}
+      </div>
+      <div class="person-row-title">${escapeHtml(emp.title)}</div>
     </div>
   </div>`;
 }
