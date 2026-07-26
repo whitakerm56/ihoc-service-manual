@@ -79,6 +79,23 @@
   .btn svg{width:14px; height:14px;}
   .btn-sm{padding:5px 9px; font-size:12px;}
 
+  /* ---------- search bar ---------- */
+  .search-bar{
+    display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:6px 8px 6px 12px; margin-bottom:16px;
+  }
+  .search-bar svg.search-icon{width:16px; height:16px; color:var(--ink-faint); flex-shrink:0;}
+  .search-bar input{
+    flex:1; min-width:0; border:none; background:transparent; outline:none; font-family:var(--body);
+    font-size:13px; color:var(--ink); padding:6px 2px;
+  }
+  .search-bar input::placeholder{color:var(--ink-faint);}
+  .search-count{font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); white-space:nowrap; padding:0 4px; min-width:56px; text-align:right;}
+  .search-bar .btn-ghost{padding:5px;}
+  .search-bar .btn-ghost svg{width:14px; height:14px;}
+  mark.search-hit{background:#FFD54A; color:#1A1A1A; border-radius:2px; padding:0 1px;}
+  mark.search-hit.current{background:var(--brick); color:#fff;}
+
   /* ---------- table ---------- */
   .table-wrap{background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden;}
   table{width:100%; border-collapse:collapse;}
@@ -223,6 +240,8 @@ let currentPage = 'pricing';
 let usingDemoData = false;
 let pricingRows = [];
 let editingId = null;
+let searchMatches = [];
+let searchIndex = -1;
 
 /* ================================================================
    NAV
@@ -314,7 +333,7 @@ function pricingTableHTML(editable){
     </tr>`;
   }).join('');
 
-  return `<div class="table-wrap"><table>
+  return `<div class="table-wrap" id="searchScope"><table>
     <thead><tr>
       <th>MM code</th><th>Description</th><th class="num">Labor hrs</th><th class="num">Labor $</th>
       <th class="num">Rate</th><th class="num">Parts</th><th class="num">Total</th>
@@ -339,6 +358,24 @@ function demoBanner(){
 /* ================================================================
    PAGE: Pricing Guide
    ================================================================ */
+function searchBarHTML(){
+  return `<div class="search-bar">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.3-4.3"/></svg>
+    <input type="text" id="pageSearchInput" placeholder="Find on this page (Ctrl+F)" autocomplete="off"
+      oninput="onSearchInput(this.value)" onkeydown="onSearchKeydown(event)">
+    <span class="search-count" id="searchCount"></span>
+    <button class="btn btn-ghost btn-sm" onclick="searchPrev()" aria-label="Previous match" title="Previous match (Shift+Enter)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="searchNext()" aria-label="Next match" title="Next match (Enter)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="clearSearch()" aria-label="Clear search" title="Clear (Esc)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>`;
+}
+
 function renderPricingPage(){
   return `
     <div class="topbar">
@@ -348,6 +385,7 @@ function renderPricingPage(){
       </div>
     </div>
     ${demoBanner()}
+    ${searchBarHTML()}
     ${pricingTableHTML(false)}
   `;
 }
@@ -367,6 +405,7 @@ function renderSettingsPage(){
       </div>
     </div>
     ${demoBanner()}
+    ${searchBarHTML()}
     ${pricingTableHTML(true)}
   `;
 }
@@ -390,6 +429,8 @@ function renderComingSoon(page){
    ================================================================ */
 async function render(){
   const main = document.getElementById('main');
+  searchMatches = [];
+  searchIndex = -1;
   if(currentPage === 'pricing'){
     if(pricingRows.length === 0) await loadPricing();
     main.innerHTML = renderPricingPage();
@@ -401,6 +442,138 @@ async function render(){
     main.innerHTML = renderComingSoon(page);
   }
 }
+
+/* ================================================================
+   FIND ON PAGE (Ctrl+F style: highlights every match, scrolls to
+   and steps through them, without touching the browser's own find)
+   ================================================================ */
+function getSearchScope(){
+  return document.getElementById('searchScope');
+}
+
+function clearHighlights(){
+  const scope = getSearchScope();
+  if(!scope) return;
+  scope.querySelectorAll('mark.search-hit').forEach(m => {
+    m.replaceWith(document.createTextNode(m.textContent));
+  });
+  scope.normalize();
+  searchMatches = [];
+  searchIndex = -1;
+}
+
+function runSearch(term){
+  clearHighlights();
+  const scope = getSearchScope();
+  if(!scope || !term){ updateSearchCount(); return; }
+
+  const re = new RegExp(escapeRegExp(term), 'gi');
+  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+    acceptNode(node){
+      return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const textNodes = [];
+  let n;
+  while(n = walker.nextNode()) textNodes.push(n);
+
+  textNodes.forEach(node => {
+    const text = node.nodeValue;
+    re.lastIndex = 0;
+    if(!re.test(text)) return;
+    re.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let m;
+    while((m = re.exec(text)) !== null){
+      if(m.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      const mark = document.createElement('mark');
+      mark.className = 'search-hit';
+      mark.textContent = m[0];
+      frag.appendChild(mark);
+      lastIndex = m.index + m[0].length;
+      if(m[0].length === 0) re.lastIndex++;
+    }
+    if(lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    node.replaceWith(frag);
+  });
+
+  searchMatches = Array.from(scope.querySelectorAll('mark.search-hit'));
+  searchIndex = searchMatches.length ? 0 : -1;
+  highlightCurrentMatch();
+  updateSearchCount();
+}
+
+function highlightCurrentMatch(){
+  searchMatches.forEach((m, i) => m.classList.toggle('current', i === searchIndex));
+  if(searchIndex >= 0){
+    searchMatches[searchIndex].scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+}
+
+function updateSearchCount(){
+  const el = document.getElementById('searchCount');
+  if(!el) return;
+  const input = document.getElementById('pageSearchInput');
+  if(searchMatches.length === 0){
+    el.textContent = (input && input.value) ? '0 of 0' : '';
+  } else {
+    el.textContent = `${searchIndex + 1} of ${searchMatches.length}`;
+  }
+}
+
+function onSearchInput(value){
+  runSearch(value.trim());
+}
+
+function onSearchKeydown(e){
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    if(e.shiftKey) searchPrev(); else searchNext();
+  } else if(e.key === 'Escape'){
+    e.preventDefault();
+    clearSearch();
+    e.target.blur();
+  }
+}
+
+function searchNext(){
+  if(!searchMatches.length) return;
+  searchIndex = (searchIndex + 1) % searchMatches.length;
+  highlightCurrentMatch();
+  updateSearchCount();
+}
+
+function searchPrev(){
+  if(!searchMatches.length) return;
+  searchIndex = (searchIndex - 1 + searchMatches.length) % searchMatches.length;
+  highlightCurrentMatch();
+  updateSearchCount();
+}
+
+function clearSearch(){
+  clearHighlights();
+  const input = document.getElementById('pageSearchInput');
+  if(input) input.value = '';
+  updateSearchCount();
+}
+
+function escapeRegExp(s){
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Ctrl+F / Cmd+F focuses the in-app find bar instead of the browser's
+// own find, but only on pages that actually have one — elsewhere the
+// browser's native find still works untouched.
+window.addEventListener('keydown', (e) => {
+  const isFindShortcut = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f';
+  if(!isFindShortcut) return;
+  const input = document.getElementById('pageSearchInput');
+  if(!input) return;
+  e.preventDefault();
+  input.focus();
+  input.select();
+});
 
 /* ================================================================
    MODAL / CRUD
