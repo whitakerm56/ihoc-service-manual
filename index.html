@@ -187,6 +187,23 @@
   .person-meta .chip{font-size:9.5px; padding:1px 6px;}
   .person-schedule{font-size:9.5px; color:var(--ink-faint); margin-top:2px; line-height:1.3;}
 
+  .org-dept-stack{width:230px;}
+  .org-dept-stack-head{
+    display:flex; align-items:center; gap:7px; font-family:var(--display); font-weight:600; font-size:12px;
+    text-transform:uppercase; letter-spacing:.03em; margin-bottom:8px;
+  }
+  .org-dept-stack-list{
+    display:flex; flex-direction:column; gap:4px; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:8px; width:100%;
+  }
+  .person-row{display:flex; align-items:center; gap:10px; text-align:left; padding:5px 6px;}
+  .person-row-info{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .person-row-name{font-weight:600; font-size:12px; color:var(--ink); white-space:nowrap;}
+  .person-row-title{font-weight:400; color:var(--ink-soft); font-size:11px;}
+  .person-row-meta{display:flex; gap:4px; align-items:center; flex-wrap:wrap; margin-top:1px;}
+  .person-row-meta .chip{font-size:9px; padding:1px 5px;}
+  .person-row-schedule{font-size:9.5px; color:var(--ink-faint);}
+
   .photo-upload-row{display:flex; align-items:center; gap:14px;}
   .photo-uploading{width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--ink-faint); border:2px dashed var(--border-strong); text-align:center;}
 
@@ -491,7 +508,7 @@ const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "phase": "Int
 const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
 const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
 
-const SEED_DATA_ORG = [{"id": "orgseed-mason", "sort_order": 10, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null}, {"id": "orgseed-jared", "sort_order": 20, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason"}, {"id": "orgseed-svcmgr", "sort_order": 30, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-qcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-bdclead", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-waylon", "sort_order": 60, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-danny", "sort_order": 70, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kaci", "sort_order": 80, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-jesse", "sort_order": 90, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-erick", "sort_order": 100, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kassandra", "sort_order": 110, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-tate", "sort_order": 120, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-zach", "sort_order": 130, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kyen", "sort_order": 140, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-greeter", "sort_order": 150, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-tara", "sort_order": 160, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-stuart", "sort_order": 170, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared"}, {"id": "orgseed-bdcrep", "sort_order": 180, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead"}];
+const SEED_DATA_ORG = [{"id": "orgseed-john", "sort_order": 10, "name": "John Csernotta", "employee_number": null, "tech_number": null, "title": "President", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null}, {"id": "orgseed-mason", "sort_order": 20, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-john"}, {"id": "orgseed-jared", "sort_order": 30, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason"}, {"id": "orgseed-svcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-qcmgr", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-bdclead", "sort_order": 60, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason"}, {"id": "orgseed-sonja", "sort_order": 70, "name": "Sonja Ault", "employee_number": null, "tech_number": null, "title": "Office Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason"}, {"id": "orgseed-waylon", "sort_order": 80, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-danny", "sort_order": 90, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kaci", "sort_order": 100, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-jesse", "sort_order": 110, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-erick", "sort_order": 120, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kassandra", "sort_order": 130, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-tate", "sort_order": 140, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-zach", "sort_order": 150, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-kyen", "sort_order": 160, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr"}, {"id": "orgseed-greeter", "sort_order": 170, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-sonja"}, {"id": "orgseed-tara", "sort_order": 180, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-sonja"}, {"id": "orgseed-stuart", "sort_order": 190, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared"}, {"id": "orgseed-bdcrep", "sort_order": 200, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead"}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -1240,16 +1257,60 @@ function personCardHTML(emp){
   </div>`;
 }
 
+function personRowCompactHTML(emp){
+  const nameDisplay = emp.is_tbd ? `<span class="ink-faint-text">Open position</span>` : escapeHtml(emp.name);
+  const metaBits = [];
+  if(emp.employee_number) metaBits.push(`<span class="chip">#${escapeHtml(emp.employee_number)}</span>`);
+  if(emp.tech_number) metaBits.push(`<span class="chip">Tech ${escapeHtml(emp.tech_number)}</span>`);
+  return `<div class="person-row">
+    ${personAvatarHTML(emp, 40)}
+    <div class="person-row-info">
+      <div class="person-row-name">${nameDisplay}<span class="person-row-title"> — ${escapeHtml(emp.title)}</span></div>
+      <div class="person-row-meta">${metaBits.join('')}${emp.schedule ? `<span class="person-row-schedule">${escapeHtml(emp.schedule)}</span>` : ''}</div>
+    </div>
+  </div>`;
+}
+
+function departmentStackHTML(dept, members){
+  return `<div class="org-tree-branch org-dept-stack">
+    <div class="org-dept-stack-head" style="color:${deptColor(dept)}">
+      <span class="board-legend-dot" style="background:${deptColor(dept)}"></span>${escapeHtml(dept)}
+    </div>
+    <div class="org-dept-stack-list">
+      ${members.map(personRowCompactHTML).join('')}
+    </div>
+  </div>`;
+}
+
 function renderOrgSubtree(emp){
   const children = orgRows.filter(r => r.reports_to === emp.id);
   if(!children.length){
     return `<div class="org-tree-branch">${personCardHTML(emp)}</div>`;
   }
+
+  // Group same-department siblings together. A group of 2+ with no
+  // subordinates of their own renders as one compact vertical list
+  // instead of spreading every person out as their own wide column —
+  // keeps the tree from ballooning sideways under a big team.
+  const groups = new Map();
+  children.forEach(c => {
+    if(!groups.has(c.department)) groups.set(c.department, []);
+    groups.get(c.department).push(c);
+  });
+
+  const branchesHtml = Array.from(groups.entries()).map(([dept, members]) => {
+    const hasGrandchildren = members.some(m => orgRows.some(r => r.reports_to === m.id));
+    if(members.length > 1 && !hasGrandchildren){
+      return departmentStackHTML(dept, members);
+    }
+    return members.map(m => renderOrgSubtree(m)).join('');
+  }).join('');
+
   return `<div class="org-tree-branch org-tree-has-children">
     ${personCardHTML(emp)}
     <div class="org-tree-connector-down"></div>
     <div class="org-tree-row">
-      ${children.map(c => renderOrgSubtree(c)).join('')}
+      ${branchesHtml}
     </div>
   </div>`;
 }
