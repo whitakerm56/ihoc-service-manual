@@ -1252,7 +1252,6 @@ function personCardHTML(emp){
       <div class="person-name">${nameDisplay}</div>
       <div class="person-title">${escapeHtml(emp.title)}</div>
       ${metaBits.length ? `<div class="person-meta">${metaBits.join('')}</div>` : ''}
-      ${emp.schedule ? `<div class="person-schedule">${escapeHtml(emp.schedule)}</div>` : ''}
     </div>
   </div>`;
 }
@@ -1266,7 +1265,7 @@ function personRowCompactHTML(emp){
     ${personAvatarHTML(emp, 40)}
     <div class="person-row-info">
       <div class="person-row-name">${nameDisplay}<span class="person-row-title"> — ${escapeHtml(emp.title)}</span></div>
-      <div class="person-row-meta">${metaBits.join('')}${emp.schedule ? `<span class="person-row-schedule">${escapeHtml(emp.schedule)}</span>` : ''}</div>
+      <div class="person-row-meta">${metaBits.join('')}</div>
     </div>
   </div>`;
 }
