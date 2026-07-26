@@ -143,22 +143,6 @@
     color:var(--ink-faint); margin:0 0 10px;
   }
   .mm-main-card{padding:18px 20px 20px; margin-bottom:26px;}
-  .phone-area-label{margin-top:22px;}
-  .phone-book{margin-bottom:8px;}
-  .phone-book-nav{display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:16px;}
-  .phone-page-dots{display:flex; gap:6px;}
-  .phone-page-dot{width:7px; height:7px; border-radius:50%; border:none; background:var(--border-strong); cursor:pointer; padding:0;}
-  .phone-page-dot.active{background:var(--brick); width:16px; border-radius:4px;}
-  .phone-page{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; align-items:start;}
-  .phone-column .phone-area-label{margin-top:0;}
-  .phone-column-table td{padding:9px 12px;}
-  .phone-column-table tr.row-item td{border-bottom:none; padding-bottom:2px;}
-  .phone-role-row td{padding-top:0; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:11.5px; color:var(--ink-faint);}
-  .phone-column-table tr.row-item:last-of-type td, .phone-column-table tr.phone-role-row:last-child td{border-bottom:none;}
-
-  @media (max-width: 900px){
-    .phone-page{grid-template-columns:1fr;}
-  }
   .mm-main-head{display:flex; align-items:flex-start; gap:14px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border);}
   .mm-letter-chip{font-family:var(--display); font-size:15px; font-weight:600; padding:5px 12px; flex-shrink:0; background:var(--brick-light); border-color:transparent; color:var(--brick-dark);}
   .mm-main-title{font-weight:600; font-size:15px; margin-bottom:2px;}
@@ -424,7 +408,6 @@ const PAGES = [
   { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
-  { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:true  },
   { id:'process',   label:'Process Board',             icon:'flow',     ready:true  },
   { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:true  },
   { id:'schedule',  label:'Employee Schedule',         icon:'calendar', ready:true  },
@@ -481,7 +464,7 @@ let editingVendorId = null;
 let editingSubprocessId = null;
 let settingsTab = 'pricing';
 let oilSettingsSubTab = 'engine';
-let phoneSettingsSubTab = 'directory';
+let orgSettingsSubTab = 'roster';
 let processSettingsSubTab = 'lifecycle';
 let scheduleSettingsSubTab = 'pattern';
 let searchMatches = [];
@@ -1051,73 +1034,26 @@ function renderOilGuidePage(){
 }
 
 /* ================================================================
-   PAGE: Phone Extensions
+   Station phones & hunt groups (shown at the bottom of Org Chart —
+   the shared phones that don't belong to one person, like the
+   Parts counters and BDC lines, plus which extensions ring together)
    ================================================================ */
-function phoneAreaColumnHTML(area, rows){
-  const rowsHtml = rows.map(r => `<tr class="row-item">
-    <td>${r.name ? escapeHtml(r.name) : `<span class="ink-faint-text">—</span>`}</td>
-    <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
-  </tr>
-  <tr class="phone-role-row"><td colspan="2">${escapeHtml(r.role)}</td></tr>`).join('');
-  return `<div class="phone-column">
-    <div class="section-label phone-area-label">${escapeHtml(area)}</div>
-    <div class="table-wrap"><table class="phone-column-table">
-      <tbody>${rowsHtml}</tbody>
-    </table></div>
-  </div>`;
-}
-
-function phoneDirectoryHTML(){
+function stationPhonesHTML(){
   const byArea = new Map();
   phoneRows.forEach(r => {
     if(!byArea.has(r.area)) byArea.set(r.area, []);
     byArea.get(r.area).push(r);
   });
-  const areas = Array.from(byArea.entries());
-
-  const PER_PAGE = 3;
-  const pages = [];
-  for(let i = 0; i < areas.length; i += PER_PAGE){
-    pages.push(areas.slice(i, i + PER_PAGE));
-  }
-
-  const pagesHtml = pages.map((pageAreas, i) => `<div class="phone-page" data-page="${i}" style="${i === 0 ? '' : 'display:none;'}">
-    ${pageAreas.map(([area, rows]) => phoneAreaColumnHTML(area, rows)).join('')}
-  </div>`).join('');
-
-  const dots = pages.map((_, i) => `<button class="phone-page-dot${i === 0 ? ' active' : ''}" data-dot="${i}" onclick="goToPhoneBookPage(${i})" aria-label="Page ${i+1}"></button>`).join('');
-
-  return `<div class="phone-book" id="phoneBook" data-page-count="${pages.length}">
-    <div class="phone-book-nav">
-      <button class="btn btn-ghost btn-sm" onclick="prevPhoneBookPage()" aria-label="Previous page">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <div class="phone-page-dots">${dots}</div>
-      <button class="btn btn-ghost btn-sm" onclick="nextPhoneBookPage()" aria-label="Next page">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
-    </div>
-    ${pagesHtml}
-  </div>`;
+  const rowsHtml = Array.from(byArea.values()).flat().map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.role)}</td>
+    <td>${escapeHtml(r.area)}</td>
+    <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Station</th><th style="width:160px">Area</th><th class="num" style="width:100px">Extension</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="3" class="empty-hint">No station phones yet.</td></tr>`}</tbody>
+  </table></div>`;
 }
-
-let phoneBookPage = 0;
-
-function goToPhoneBookPage(n){
-  const book = document.getElementById('phoneBook');
-  if(!book) return;
-  const count = parseInt(book.dataset.pageCount, 10);
-  phoneBookPage = Math.max(0, Math.min(count - 1, n));
-  book.querySelectorAll('.phone-page').forEach(p => {
-    p.style.display = parseInt(p.dataset.page, 10) === phoneBookPage ? '' : 'none';
-  });
-  book.querySelectorAll('.phone-page-dot').forEach(d => {
-    d.classList.toggle('active', parseInt(d.dataset.dot, 10) === phoneBookPage);
-  });
-}
-
-function nextPhoneBookPage(){ goToPhoneBookPage(phoneBookPage + 1); }
-function prevPhoneBookPage(){ goToPhoneBookPage(phoneBookPage - 1); }
 
 function huntGroupsHTML(){
   const rowsHtml = huntGroupRows.map(hg => `<tr class="row-item">
@@ -1129,22 +1065,6 @@ function huntGroupsHTML(){
     <thead><tr><th style="width:100px">Group #</th><th style="width:160px">Rings</th><th>Member extensions</th></tr></thead>
     <tbody>${rowsHtml || `<tr><td colspan="3" class="empty-hint">No hunt groups yet.</td></tr>`}</tbody>
   </table></div>`;
-}
-
-function renderPhonesPage(){
-  return `
-    <div class="topbar">
-      <div>
-        <h2>Phone extensions</h2>
-        <div class="desc">Who to call and where they sit. Search by name in the sidebar to find someone fast.</div>
-      </div>
-    </div>
-    ${demoBanner(usingDemoDataPhones, 'phones')}
-    ${phoneDirectoryHTML()}
-    <div class="section-label">Hunt groups</div>
-    <div class="desc" style="margin-bottom:12px;">Dialing any member of a hunt group rings every extension in it at once.</div>
-    ${huntGroupsHTML()}
-  `;
 }
 
 /* ================================================================
@@ -1276,6 +1196,7 @@ function personCardHTML(emp){
   const metaBits = [];
   if(emp.employee_number) metaBits.push(`<span class="chip">#${escapeHtml(emp.employee_number)}</span>`);
   if(emp.tech_number) metaBits.push(`<span class="chip">Tech ${escapeHtml(emp.tech_number)}</span>`);
+  if(emp.extension) metaBits.push(`<span class="chip mm-number-chip">Ext ${escapeHtml(emp.extension)}</span>`);
   return `<div class="person-card">
     ${personAvatarHTML(emp, 64)}
     <div class="person-info">
@@ -1293,6 +1214,7 @@ function personRowCompactHTML(emp){
   const metaBits = [];
   if(emp.employee_number) metaBits.push(`<span class="chip">#${escapeHtml(emp.employee_number)}</span>`);
   if(emp.tech_number) metaBits.push(`<span class="chip">Tech ${escapeHtml(emp.tech_number)}</span>`);
+  if(emp.extension) metaBits.push(`<span class="chip mm-number-chip">Ext ${escapeHtml(emp.extension)}</span>`);
   return `<div class="person-row">
     ${personAvatarHTML(emp, 40)}
     <div class="person-row-info">
@@ -1368,6 +1290,12 @@ function renderOrgChartPage(){
     ${demoBanner(usingDemoDataOrg, 'org')}
     <div class="board-legend">${DEPARTMENT_ORDER.filter(d => orgRows.some(e => e.department === d)).map(d => `<span class="board-legend-item"><span class="board-legend-dot" style="background:${deptColor(d)}"></span>${d}</span>`).join('')}</div>
     ${orgChartHTML()}
+    <div class="section-label">Station phones</div>
+    <div class="desc" style="margin-bottom:12px;">Shared phones that aren't tied to one person — an employee's own extension shows right on their card above.</div>
+    ${stationPhonesHTML()}
+    <div class="section-label">Hunt groups</div>
+    <div class="desc" style="margin-bottom:12px;">Dialing any member of a hunt group rings every extension in it at once.</div>
+    ${huntGroupsHTML()}
   `;
 }
 
@@ -1518,7 +1446,6 @@ const SETTINGS_TABLE_META = {
   mmcodes: { label: 'Maintenance Minder Codes' },
   vendors: { label: 'Vendors' },
   oilguide: { label: 'Oil Application Guide' },
-  phones: { label: 'Phone Extensions' },
   process: { label: 'Process Board' },
   orgchart: { label: 'Org Chart' },
   schedule: { label: 'Employee Schedule' },
@@ -1554,9 +1481,6 @@ function renderSettingsPage(){
   }
   if(settingsTab === 'oilguide'){
     return renderOilGuideSettings();
-  }
-  if(settingsTab === 'phones'){
-    return renderPhonesSettings();
   }
   if(settingsTab === 'process'){
     return renderProcessSettings();
@@ -1681,22 +1605,16 @@ function renderOilGuideSettings(){
   `;
 }
 
-function switchPhoneSettingsSubTab(tab){
-  phoneSettingsSubTab = tab;
-  render();
-}
-
-function phoneSettingsTableHTML(){
+function stationPhonesSettingsTableHTML(){
   const rowsHtml = phoneRows.map(r => `<tr class="row-item">
-    <td>${r.name ? escapeHtml(r.name) : ''}</td>
     <td>${escapeHtml(r.role)}</td>
     <td>${escapeHtml(r.area)}</td>
     <td class="mono">${r.extension ? escapeHtml(r.extension) : ''}</td>
     <td class="actions-cell">${actionButtons(r.id, 'phones')}</td>
   </tr>`).join('');
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Name</th><th>Role</th><th style="width:140px">Area</th><th style="width:90px">Extension</th><th class="num" style="width:90px">Actions</th></tr></thead>
-    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+    <thead><tr><th>Station</th><th style="width:140px">Area</th><th style="width:90px">Extension</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No rows yet.</td></tr>`}</tbody>
   </table></div>`;
 }
 
@@ -1711,35 +1629,6 @@ function huntGroupSettingsTableHTML(){
     <thead><tr><th style="width:100px">Group #</th><th style="width:160px">Rings</th><th>Member extensions</th><th class="num" style="width:90px">Actions</th></tr></thead>
     <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No hunt groups yet.</td></tr>`}</tbody>
   </table></div>`;
-}
-
-function renderPhonesSettings(){
-  const subTabs = [
-    { key:'directory', label:'Directory', addFn:'openPhoneAdd' },
-    { key:'huntgroups', label:'Hunt Groups', addFn:'openHuntGroupAdd' },
-  ];
-  const active = subTabs.find(t => t.key === phoneSettingsSubTab) || subTabs[0];
-  const content = phoneSettingsSubTab === 'huntgroups' ? huntGroupSettingsTableHTML() : phoneSettingsTableHTML();
-  const isDemo = phoneSettingsSubTab === 'huntgroups' ? usingDemoDataHuntGroups : usingDemoDataPhones;
-  const endpoint = phoneSettingsSubTab === 'huntgroups' ? 'huntgroups' : 'phones';
-
-  return `
-    <div class="topbar">
-      <div>
-        <h2>Settings</h2>
-        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="${active.addFn}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
-      </div>
-    </div>
-    ${settingsTabsHTML()}
-    <div class="settings-tabs settings-tabs-sub">
-      ${subTabs.map(t => `<button class="settings-tab${phoneSettingsSubTab === t.key ? ' active' : ''}" onclick="switchPhoneSettingsSubTab('${t.key}')">${t.label}</button>`).join('')}
-    </div>
-    ${demoBanner(isDemo, endpoint)}
-    ${content}
-  `;
 }
 
 /* ---------- Process Board Settings ---------- */
@@ -1849,16 +1738,38 @@ function orgSettingsTableHTML(){
     <td>${r.is_tbd ? `<span class="ink-faint-text">Open position</span>` : escapeHtml(r.name)}</td>
     <td>${escapeHtml(r.title)}</td>
     <td><span class="role-badge" style="background:${deptColor(r.department)}">${escapeHtml(r.department)}</span></td>
+    <td class="mono">${r.extension ? escapeHtml(r.extension) : ''}</td>
     <td>${r.reports_to && byId[r.reports_to] ? escapeHtml(byId[r.reports_to].name) : '<span class="ink-faint-text">—</span>'}</td>
     <td class="actions-cell">${actionButtons(r.id, 'org')}</td>
   </tr>`).join('');
   return `<div class="table-wrap"><table>
-    <thead><tr><th style="width:50px"></th><th>Name</th><th>Title</th><th style="width:120px">Department</th><th>Reports to</th><th class="num" style="width:90px">Actions</th></tr></thead>
-    <tbody>${rowsHtml || `<tr><td colspan="6" class="empty-hint">No employees yet.</td></tr>`}</tbody>
+    <thead><tr><th style="width:50px"></th><th>Name</th><th>Title</th><th style="width:110px">Department</th><th style="width:80px">Ext</th><th>Reports to</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="7" class="empty-hint">No employees yet.</td></tr>`}</tbody>
   </table></div>`;
 }
 
+function switchOrgSettingsSubTab(tab){
+  orgSettingsSubTab = tab;
+  render();
+}
+
 function renderOrgSettings(){
+  if(!['roster','stations','stations-hg'].includes(orgSettingsSubTab)){
+    orgSettingsSubTab = 'roster';
+  }
+
+  let content, isDemo, endpoint, addFn, addLabel;
+  if(orgSettingsSubTab === 'roster'){
+    content = orgSettingsTableHTML();
+    isDemo = usingDemoDataOrg; endpoint = 'org'; addFn = 'openOrgAdd'; addLabel = 'Add employee';
+  } else if(orgSettingsSubTab === 'stations-hg'){
+    content = huntGroupSettingsTableHTML();
+    isDemo = usingDemoDataHuntGroups; endpoint = 'huntgroups'; addFn = 'openHuntGroupAdd'; addLabel = 'Add hunt group';
+  } else {
+    content = stationPhonesSettingsTableHTML();
+    isDemo = usingDemoDataPhones; endpoint = 'phones'; addFn = 'openPhoneAdd'; addLabel = 'Add station phone';
+  }
+
   return `
     <div class="topbar">
       <div>
@@ -1866,12 +1777,17 @@ function renderOrgSettings(){
         <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openOrgAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add employee</button>
+        <button class="btn btn-primary" onclick="${addFn}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> ${addLabel}</button>
       </div>
     </div>
     ${settingsTabsHTML()}
-    ${demoBanner(usingDemoDataOrg, 'org')}
-    ${orgSettingsTableHTML()}
+    <div class="settings-tabs settings-tabs-sub">
+      <button class="settings-tab${orgSettingsSubTab === 'roster' ? ' active' : ''}" onclick="switchOrgSettingsSubTab('roster')">Employees</button>
+      <button class="settings-tab${orgSettingsSubTab === 'stations' ? ' active' : ''}" onclick="switchOrgSettingsSubTab('stations')">Station Phones</button>
+      <button class="settings-tab${orgSettingsSubTab === 'stations-hg' ? ' active' : ''}" onclick="switchOrgSettingsSubTab('stations-hg')">Hunt Groups</button>
+    </div>
+    ${demoBanner(isDemo, endpoint)}
+    ${content}
   `;
 }
 
@@ -1995,10 +1911,6 @@ async function render(){
     if(fluidPartsRows.length === 0) await loadFluidParts();
     if(otherFluidsRows.length === 0) await loadOtherFluids();
     main.innerHTML = renderOilGuidePage();
-  } else if(currentPage === 'phones'){
-    if(phoneRows.length === 0) await loadPhones();
-    if(huntGroupRows.length === 0) await loadHuntGroups();
-    main.innerHTML = renderPhonesPage();
   } else if(currentPage === 'process'){
     if(lifecycleRows.length === 0) await loadLifecycle();
     if(subprocessRows.length === 0) await loadSubprocesses();
@@ -2006,6 +1918,8 @@ async function render(){
     main.innerHTML = renderProcessPage();
   } else if(currentPage === 'orgchart'){
     if(orgRows.length === 0) await loadOrg();
+    if(phoneRows.length === 0) await loadPhones();
+    if(huntGroupRows.length === 0) await loadHuntGroups();
     main.innerHTML = renderOrgChartPage();
   } else if(currentPage === 'schedule'){
     if(orgRows.length === 0) await loadOrg();
@@ -2098,12 +2012,7 @@ function runSearch(term){
 function highlightCurrentMatch(){
   searchMatches.forEach((m, i) => m.classList.toggle('current', i === searchIndex));
   if(searchIndex >= 0){
-    const match = searchMatches[searchIndex];
-    const page = match.closest('.phone-page');
-    if(page){
-      goToPhoneBookPage(parseInt(page.dataset.page, 10));
-    }
-    match.scrollIntoView({ behavior:'smooth', block:'center' });
+    searchMatches[searchIndex].scrollIntoView({ behavior:'smooth', block:'center' });
   }
 }
 
@@ -2812,19 +2721,15 @@ function phoneModalFormHTML(r){
   return `
     <div class="field-row">
       <div class="field">
-        <label>Name</label>
-        <input type="text" id="p_name" value="${escapeAttr(r.name)}" placeholder="Optional — blank for shared station phones">
+        <label>Station</label>
+        <input type="text" id="p_role" value="${escapeAttr(r.role)}" placeholder="e.g. Parts Front Counter">
       </div>
       <div class="field">
         <label>Extension</label>
-        <input type="text" id="p_extension" value="${escapeAttr(r.extension)}" placeholder="e.g. 200">
+        <input type="text" id="p_extension" value="${escapeAttr(r.extension)}" placeholder="e.g. 301">
       </div>
     </div>
     <div class="field-row">
-      <div class="field">
-        <label>Role</label>
-        <input type="text" id="p_role" value="${escapeAttr(r.role)}" placeholder="e.g. Advisor 1, Rack 2 & 3">
-      </div>
       <div class="field">
         <label>Area</label>
         <input type="text" id="p_area" value="${escapeAttr(r.area)}" placeholder="e.g. Shop Floor, Parts Department">
@@ -2835,13 +2740,13 @@ function phoneModalFormHTML(r){
 
 async function savePhoneRow(){
   const payload = {
-    name: type_or_null(document.getElementById('p_name').value),
+    name: null,
     role: document.getElementById('p_role').value.trim(),
     area: document.getElementById('p_area').value.trim(),
     extension: type_or_null(document.getElementById('p_extension').value),
   };
   if(!payload.role || !payload.area){
-    alert('Role/station and area are required.');
+    alert('Station and area are required.');
     return;
   }
 
@@ -3246,7 +3151,7 @@ async function deleteRuleRow(id){
 
 /* ---------- Org Chart CRUD ---------- */
 function emptyOrgRow(){
-  return { name:'', title:'', department: DEPARTMENT_ORDER[0], reports_to:'', employee_number:'', tech_number:'', schedule:'', photo_url:'', is_tbd:false };
+  return { name:'', title:'', department: DEPARTMENT_ORDER[0], reports_to:'', employee_number:'', extension:'', tech_number:'', schedule:'', photo_url:'', is_tbd:false };
 }
 
 function openOrgAdd(){
@@ -3312,6 +3217,10 @@ function orgModalFormHTML(r){
       <div class="field">
         <label>Employee #</label>
         <input type="text" id="o_employee_number" value="${escapeAttr(r.employee_number)}" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label>Extension</label>
+        <input type="text" id="o_extension" value="${escapeAttr(r.extension)}" placeholder="Optional, e.g. 204">
       </div>
       <div class="field">
         <label>Tech # (rotating schedule)</label>
@@ -3384,6 +3293,7 @@ async function saveOrgRow(){
     department: document.getElementById('o_department').value,
     reports_to: document.getElementById('o_reports_to').value || null,
     employee_number: type_or_null(document.getElementById('o_employee_number').value),
+    extension: type_or_null(document.getElementById('o_extension').value),
     tech_number: type_or_null(document.getElementById('o_tech_number').value),
     schedule: type_or_null(document.getElementById('o_schedule').value),
     photo_url: type_or_null(document.getElementById('o_photo_url').value),
@@ -3685,14 +3595,14 @@ const SEED_DATA_OILGUIDE = [{"id": "oilseed-10", "sort_order": 10, "model": "Acc
 const SEED_DATA_FLUIDPARTS = [{"id": "fpseed-10", "sort_order": 10, "fluid_name": "ATF-DW1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9008", "color_hex": "#1E6FD9", "notes": null, "verified": true}, {"id": "fpseed-20", "sort_order": 20, "fluid_name": "ATF-Type 2.0", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9015*", "color_hex": "#E8C93A", "notes": null, "verified": true}, {"id": "fpseed-30", "sort_order": 30, "fluid_name": "ATF-Type 3.1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9017", "color_hex": "#C23A8B", "notes": null, "verified": true}, {"id": "fpseed-40", "sort_order": 40, "fluid_name": "CVT Fluid", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9006", "color_hex": "#4C6B2F", "notes": null, "verified": true}, {"id": "fpseed-50", "sort_order": 50, "fluid_name": "HCF-2", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-HCF2", "color_hex": "#D9A61E", "notes": null, "verified": true}, {"id": "fpseed-60", "sort_order": 60, "fluid_name": "MTF", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08798-9031", "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-70", "sort_order": 70, "fluid_name": "Dual Pump Fluid (DPSF II)", "fluid_category": "Rear Differential", "container": "Quart", "part_number": "08200-9007", "color_hex": "#C1622A", "notes": null, "verified": true}, {"id": "fpseed-80", "sort_order": 80, "fluid_name": "VTM-4", "fluid_category": "Rear Differential", "container": "Gallon", "part_number": "08200-9014**", "color_hex": "#7FB6D9", "notes": null, "verified": true}, {"id": "fpseed-90", "sort_order": 90, "fluid_name": "HGO-1", "fluid_category": "Transfer Assembly Fluid", "container": "Quart", "part_number": null, "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-100", "sort_order": 100, "fluid_name": "Antifreeze/Coolant Type 2", "fluid_category": "Antifreeze/Coolant", "container": "Gallon", "part_number": "01999-9011", "color_hex": "#4F9B3E", "notes": null, "verified": true}, {"id": "fpseed-110", "sort_order": 110, "fluid_name": "DOT-3", "fluid_category": "Brake Fluid", "container": "12 fl oz", "part_number": "08798-9008", "color_hex": "#3A2E8C", "notes": null, "verified": true}, {"id": "fpseed-120", "sort_order": 120, "fluid_name": "Power Steering Fluid", "fluid_category": "Power Steering Fluid", "container": "12 fl oz", "part_number": "08206-9002", "color_hex": "#C0392B", "notes": null, "verified": true}, {"id": "fpseed-130", "sort_order": 130, "fluid_name": "Washer Concentrate/Antifreeze", "fluid_category": "Windshield Washer", "container": "16 fl oz", "part_number": "08798-9025", "color_hex": "#B3A6D9", "notes": null, "verified": true}];
 const SEED_DATA_OTHERFLUIDS = [{"id": "ofseed-10", "sort_order": 10, "model": "Accord", "trim": "E-CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": true}, {"id": "ofseed-20", "sort_order": 20, "model": "Accord", "trim": "E-CVT Trans (Plug-in)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": true}, {"id": "ofseed-30", "sort_order": 30, "model": "Accord", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2018, "year_end": null, "verified": true}, {"id": "ofseed-40", "sort_order": 40, "model": "Accord", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2017, "verified": true}, {"id": "ofseed-50", "sort_order": 50, "model": "Civic", "trim": "CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2015, "verified": true}, {"id": "ofseed-60", "sort_order": 60, "model": "Civic", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-70", "sort_order": 70, "model": "Crosstour", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": 2015, "verified": true}, {"id": "ofseed-80", "sort_order": 80, "model": "CR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": null, "verified": true}, {"id": "ofseed-90", "sort_order": 90, "model": "CR-Z", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2011, "year_end": 2016, "verified": true}, {"id": "ofseed-100", "sort_order": 100, "model": "Element", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": 2011, "verified": true}, {"id": "ofseed-110", "sort_order": 110, "model": "Fit", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2015, "year_end": null, "verified": true}, {"id": "ofseed-120", "sort_order": 120, "model": "HR-V", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-130", "sort_order": 130, "model": "HR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-140", "sort_order": 140, "model": "Insight", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2006, "verified": true}, {"id": "ofseed-150", "sort_order": 150, "model": "Pilot", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-160", "sort_order": 160, "model": "Pilot", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": null, "verified": true}, {"id": "ofseed-170", "sort_order": 170, "model": "Passport", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2019, "year_end": null, "verified": true}, {"id": "ofseed-180", "sort_order": 180, "model": "Passport", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2019, "year_end": null, "verified": true}, {"id": "ofseed-190", "sort_order": 190, "model": "Ridgeline", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2006, "year_end": null, "verified": true}, {"id": "ofseed-200", "sort_order": 200, "model": "Odyssey", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2010, "verified": true}, {"id": "ofseed-210", "sort_order": 210, "model": "Odyssey", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2018, "year_end": null, "verified": true}, {"id": "ofseed-220", "sort_order": 220, "model": "All", "trim": "Transfer Assembly", "fluid_name": "HGO-1", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-230", "sort_order": 230, "model": "All", "trim": "Manual Transmission", "fluid_name": "MTF", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-240", "sort_order": 240, "model": "All", "trim": "Non-CVT Transmission", "fluid_name": "ATF-DW1", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-250", "sort_order": 250, "model": "All", "trim": "Antifreeze", "fluid_name": "Antifreeze/Coolant Type 2", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-260", "sort_order": 260, "model": "All", "trim": "Brake Fluid", "fluid_name": "DOT-3", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-270", "sort_order": 270, "model": "All", "trim": "Power Steering Fluid", "fluid_name": "Power Steering Fluid", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-280", "sort_order": 280, "model": "All", "trim": "Windshield Washer", "fluid_name": "Washer Concentrate/Antifreeze", "year_start": null, "year_end": null, "verified": true}];
 
-const SEED_DATA_PHONES = [{"id": "pxseed-10", "sort_order": 10, "name": "Mason Whitaker", "role": "Service & Parts Director", "area": "Management", "extension": "200"}, {"id": "pxseed-20", "sort_order": 20, "name": "Kaci Phansisay", "role": "Advisor 1", "area": "Service Reception", "extension": "203"}, {"id": "pxseed-30", "sort_order": 30, "name": "Danny Pagel Jensen", "role": "Advisor 2", "area": "Service Reception", "extension": "202"}, {"id": "pxseed-40", "sort_order": 40, "name": "Waylon Foote", "role": "Advisor 3", "area": "Service Reception", "extension": "204"}, {"id": "pxseed-50", "sort_order": 50, "name": "Tara Gray", "role": "Receptionist", "area": "Front Office", "extension": "700"}, {"id": "pxseed-60", "sort_order": 60, "name": "Jared Scherieble", "role": "Parts Manager", "area": "Parts Department", "extension": "300"}, {"id": "pxseed-70", "sort_order": 70, "name": "Stuart Wilson", "role": "Parts Associate", "area": "Parts Department", "extension": "304"}, {"id": "pxseed-80", "sort_order": 80, "name": null, "role": "Parts Front Counter", "area": "Parts Department", "extension": "301"}, {"id": "pxseed-90", "sort_order": 90, "name": null, "role": "Parts Back Counter", "area": "Parts Department", "extension": "303"}, {"id": "pxseed-100", "sort_order": 100, "name": null, "role": "BDC 1", "area": "BDC", "extension": "602"}, {"id": "pxseed-110", "sort_order": 110, "name": null, "role": "BDC 2", "area": "BDC", "extension": "601"}, {"id": "pxseed-120", "sort_order": 120, "name": "Zach Anderson", "role": "Rack 1", "area": "Shop Floor", "extension": null}, {"id": "pxseed-130", "sort_order": 130, "name": "Tate Tornow / Kyen Phansisay", "role": "Rack 2 & 3", "area": "Shop Floor", "extension": "205"}, {"id": "pxseed-140", "sort_order": 140, "name": "Erick Hinchcliff", "role": "Rack 4 & 5", "area": "Shop Floor", "extension": "112"}, {"id": "pxseed-150", "sort_order": 150, "name": "Jesse Wharton", "role": "Rack 6 & 7", "area": "Shop Floor", "extension": "208"}, {"id": "pxseed-160", "sort_order": 160, "name": "Kassandra Pomme", "role": "Rack 8 & 9", "area": "Shop Floor", "extension": "209"}, {"id": "pxseed-170", "sort_order": 170, "name": null, "role": "Detail", "area": "Shop Floor", "extension": "206"}, {"id": "pxseed-180", "sort_order": 180, "name": null, "role": "Alignment", "area": "Shop Floor", "extension": null}, {"id": "pxseed-190", "sort_order": 190, "name": null, "role": "EV Bay (No Lift)", "area": "Shop Floor", "extension": null}];
+const SEED_DATA_PHONES = [{"id": "pxseed-80", "sort_order": 80, "name": null, "role": "Parts Front Counter", "area": "Parts Department", "extension": "301"}, {"id": "pxseed-90", "sort_order": 90, "name": null, "role": "Parts Back Counter", "area": "Parts Department", "extension": "303"}, {"id": "pxseed-100", "sort_order": 100, "name": null, "role": "BDC 1", "area": "BDC", "extension": "602"}, {"id": "pxseed-110", "sort_order": 110, "name": null, "role": "BDC 2", "area": "BDC", "extension": "601"}, {"id": "pxseed-170", "sort_order": 170, "name": null, "role": "Detail", "area": "Shop Floor", "extension": "206"}, {"id": "pxseed-180", "sort_order": 180, "name": null, "role": "Alignment", "area": "Shop Floor", "extension": null}, {"id": "pxseed-190", "sort_order": 190, "name": null, "role": "EV Bay (No Lift)", "area": "Shop Floor", "extension": null}];
 const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_number": "1112", "group_name": "BDC / Reception", "members": "601, 602, 700"}, {"id": "hgseed-20", "sort_order": 20, "group_number": "1105", "group_name": "Service Advisors", "members": "200, 202, 203, 204"}, {"id": "hgseed-30", "sort_order": 30, "group_number": "1108", "group_name": "Parts", "members": "300, 301, 303, 304"}, {"id": "hgseed-40", "sort_order": 40, "group_number": "1106", "group_name": "Technicians", "members": "112, 205, 208, 209"}];
 
 const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "phase": "Intake & Scheduling", "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "phase": "Intake & Scheduling", "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-30", "sort_order": 30, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-40", "sort_order": 40, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter area"}, {"id": "lcseed-50", "sort_order": 50, "phase": "Intake & Scheduling", "role": "Manager", "step_text": "Work Distribution"}, {"id": "lcseed-60", "sort_order": 60, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "phase": "Diagnosis & Inspection", "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "phase": "Customer Approval", "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-110", "sort_order": 110, "phase": "Customer Approval", "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-120", "sort_order": 120, "phase": "Customer Approval", "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-130", "sort_order": 130, "phase": "Customer Approval", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-140", "sort_order": 140, "phase": "Repair Execution & QC", "role": "Parts", "step_text": "Deliver Authorized A.S.R.'s to Technician"}, {"id": "lcseed-150", "sort_order": 150, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-160", "sort_order": 160, "phase": "Repair Execution & QC", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-170", "sort_order": 170, "phase": "Repair Execution & QC", "role": "Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-180", "sort_order": 180, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-190", "sort_order": 190, "phase": "Invoicing & Delivery", "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-200", "sort_order": 200, "phase": "Follow-Up", "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-210", "sort_order": 210, "phase": "Follow-Up", "role": "Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
 const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
 const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
 
-const SEED_DATA_ORG = [{"id": "orgseed-john", "sort_order": 10, "name": "John Csernotta", "employee_number": null, "tech_number": null, "title": "President", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null, "work_days": null}, {"id": "orgseed-mason", "sort_order": 20, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-john", "work_days": null}, {"id": "orgseed-jared", "sort_order": 30, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null}, {"id": "orgseed-svcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null}, {"id": "orgseed-qcmgr", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null}, {"id": "orgseed-bdclead", "sort_order": 60, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null}, {"id": "orgseed-sonja", "sort_order": 70, "name": "Sonja Ault", "employee_number": null, "tech_number": null, "title": "Office Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null}, {"id": "orgseed-waylon", "sort_order": 80, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"]}, {"id": "orgseed-danny", "sort_order": 90, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"]}, {"id": "orgseed-kaci", "sort_order": 100, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"]}, {"id": "orgseed-jesse", "sort_order": 110, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"]}, {"id": "orgseed-erick", "sort_order": 120, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"]}, {"id": "orgseed-kassandra", "sort_order": 130, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"]}, {"id": "orgseed-tate", "sort_order": 140, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null}, {"id": "orgseed-zach", "sort_order": 150, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null}, {"id": "orgseed-kyen", "sort_order": 160, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null}, {"id": "orgseed-greeter", "sort_order": 170, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-sonja", "work_days": null}, {"id": "orgseed-tara", "sort_order": 180, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-sonja", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"]}, {"id": "orgseed-stuart", "sort_order": 190, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"]}, {"id": "orgseed-bdcrep", "sort_order": 200, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead", "work_days": null}];
+const SEED_DATA_ORG = [{"id": "orgseed-john", "sort_order": 10, "name": "John Csernotta", "employee_number": null, "tech_number": null, "title": "President", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null, "work_days": null, "extension": null}, {"id": "orgseed-mason", "sort_order": 20, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-john", "work_days": null, "extension": "200"}, {"id": "orgseed-jared", "sort_order": 30, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null, "extension": "300"}, {"id": "orgseed-svcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-qcmgr", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-bdclead", "sort_order": 60, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-sonja", "sort_order": 70, "name": "Sonja Ault", "employee_number": null, "tech_number": null, "title": "Office Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-waylon", "sort_order": 80, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "204"}, {"id": "orgseed-danny", "sort_order": 90, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "202"}, {"id": "orgseed-kaci", "sort_order": 100, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "203"}, {"id": "orgseed-jesse", "sort_order": 110, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "208"}, {"id": "orgseed-erick", "sort_order": 120, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "112"}, {"id": "orgseed-kassandra", "sort_order": 130, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "209"}, {"id": "orgseed-tate", "sort_order": 140, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": "205"}, {"id": "orgseed-zach", "sort_order": 150, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": null}, {"id": "orgseed-kyen", "sort_order": 160, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Technician", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": "205"}, {"id": "orgseed-greeter", "sort_order": 170, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-sonja", "work_days": null, "extension": null}, {"id": "orgseed-tara", "sort_order": 180, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-sonja", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "700"}, {"id": "orgseed-stuart", "sort_order": 190, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "304"}, {"id": "orgseed-bdcrep", "sort_order": 200, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead", "work_days": null, "extension": null}];
 
 const SEED_DATA_ROTATIONPATTERN = [{"id": "rpseed-10", "sort_order": 10, "week_type": 1, "weekday": "Mon", "off_tech_number": "2000"}, {"id": "rpseed-20", "sort_order": 20, "week_type": 1, "weekday": "Tue", "off_tech_number": "2000"}, {"id": "rpseed-30", "sort_order": 30, "week_type": 1, "weekday": "Wed", "off_tech_number": "3000"}, {"id": "rpseed-40", "sort_order": 40, "week_type": 1, "weekday": "Thu", "off_tech_number": "3000"}, {"id": "rpseed-50", "sort_order": 50, "week_type": 1, "weekday": "Fri", "off_tech_number": "1000"}, {"id": "rpseed-60", "sort_order": 60, "week_type": 1, "weekday": "Sat", "off_tech_number": "1000"}, {"id": "rpseed-70", "sort_order": 70, "week_type": 2, "weekday": "Mon", "off_tech_number": "1000"}, {"id": "rpseed-80", "sort_order": 80, "week_type": 2, "weekday": "Tue", "off_tech_number": "1000"}, {"id": "rpseed-90", "sort_order": 90, "week_type": 2, "weekday": "Wed", "off_tech_number": "2000"}, {"id": "rpseed-100", "sort_order": 100, "week_type": 2, "weekday": "Thu", "off_tech_number": "2000"}, {"id": "rpseed-110", "sort_order": 110, "week_type": 2, "weekday": "Fri", "off_tech_number": "3000"}, {"id": "rpseed-120", "sort_order": 120, "week_type": 2, "weekday": "Sat", "off_tech_number": "3000"}, {"id": "rpseed-130", "sort_order": 130, "week_type": 3, "weekday": "Mon", "off_tech_number": "3000"}, {"id": "rpseed-140", "sort_order": 140, "week_type": 3, "weekday": "Tue", "off_tech_number": "3000"}, {"id": "rpseed-150", "sort_order": 150, "week_type": 3, "weekday": "Wed", "off_tech_number": "1000"}, {"id": "rpseed-160", "sort_order": 160, "week_type": 3, "weekday": "Thu", "off_tech_number": "1000"}, {"id": "rpseed-170", "sort_order": 170, "week_type": 3, "weekday": "Fri", "off_tech_number": "2000"}, {"id": "rpseed-180", "sort_order": 180, "week_type": 3, "weekday": "Sat", "off_tech_number": "2000"}];
 const SEED_DATA_ROTATIONANCHOR = [{"id": "anchorseed-1", "anchor_monday": "2023-09-04", "anchor_week_type": 1}];
