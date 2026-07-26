@@ -144,6 +144,21 @@
   }
   .mm-main-card{padding:18px 20px 20px; margin-bottom:26px;}
   .phone-area-label{margin-top:22px;}
+  .phone-book{margin-bottom:8px;}
+  .phone-book-nav{display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:16px;}
+  .phone-page-dots{display:flex; gap:6px;}
+  .phone-page-dot{width:7px; height:7px; border-radius:50%; border:none; background:var(--border-strong); cursor:pointer; padding:0;}
+  .phone-page-dot.active{background:var(--brick); width:16px; border-radius:4px;}
+  .phone-page{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; align-items:start;}
+  .phone-column .phone-area-label{margin-top:0;}
+  .phone-column-table td{padding:9px 12px;}
+  .phone-column-table tr.row-item td{border-bottom:none; padding-bottom:2px;}
+  .phone-role-row td{padding-top:0; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:11.5px; color:var(--ink-faint);}
+  .phone-column-table tr.row-item:last-of-type td, .phone-column-table tr.phone-role-row:last-child td{border-bottom:none;}
+
+  @media (max-width: 900px){
+    .phone-page{grid-template-columns:1fr;}
+  }
   .mm-main-head{display:flex; align-items:flex-start; gap:14px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border);}
   .mm-letter-chip{font-family:var(--display); font-size:15px; font-weight:600; padding:5px 12px; flex-shrink:0; background:var(--brick-light); border-color:transparent; color:var(--brick-dark);}
   .mm-main-title{font-weight:600; font-size:15px; margin-bottom:2px;}
@@ -857,26 +872,71 @@ function renderOilGuidePage(){
 /* ================================================================
    PAGE: Phone Extensions
    ================================================================ */
+function phoneAreaColumnHTML(area, rows){
+  const rowsHtml = rows.map(r => `<tr class="row-item">
+    <td>${r.name ? escapeHtml(r.name) : `<span class="ink-faint-text">—</span>`}</td>
+    <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
+  </tr>
+  <tr class="phone-role-row"><td colspan="2">${escapeHtml(r.role)}</td></tr>`).join('');
+  return `<div class="phone-column">
+    <div class="section-label phone-area-label">${escapeHtml(area)}</div>
+    <div class="table-wrap"><table class="phone-column-table">
+      <tbody>${rowsHtml}</tbody>
+    </table></div>
+  </div>`;
+}
+
 function phoneDirectoryHTML(){
   const byArea = new Map();
   phoneRows.forEach(r => {
     if(!byArea.has(r.area)) byArea.set(r.area, []);
     byArea.get(r.area).push(r);
   });
+  const areas = Array.from(byArea.entries());
 
-  return Array.from(byArea.entries()).map(([area, rows]) => {
-    const rowsHtml = rows.map(r => `<tr class="row-item">
-      <td>${r.name ? escapeHtml(r.name) : `<span class="ink-faint-text">—</span>`}</td>
-      <td>${escapeHtml(r.role)}</td>
-      <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
-    </tr>`).join('');
-    return `<div class="section-label phone-area-label">${escapeHtml(area)}</div>
-    <div class="table-wrap" style="margin-bottom:26px;"><table>
-      <thead><tr><th>Name</th><th>Role</th><th class="num" style="width:100px">Extension</th></tr></thead>
-      <tbody>${rowsHtml}</tbody>
-    </table></div>`;
-  }).join('');
+  const PER_PAGE = 3;
+  const pages = [];
+  for(let i = 0; i < areas.length; i += PER_PAGE){
+    pages.push(areas.slice(i, i + PER_PAGE));
+  }
+
+  const pagesHtml = pages.map((pageAreas, i) => `<div class="phone-page" data-page="${i}" style="${i === 0 ? '' : 'display:none;'}">
+    ${pageAreas.map(([area, rows]) => phoneAreaColumnHTML(area, rows)).join('')}
+  </div>`).join('');
+
+  const dots = pages.map((_, i) => `<button class="phone-page-dot${i === 0 ? ' active' : ''}" data-dot="${i}" onclick="goToPhoneBookPage(${i})" aria-label="Page ${i+1}"></button>`).join('');
+
+  return `<div class="phone-book" id="phoneBook" data-page-count="${pages.length}">
+    <div class="phone-book-nav">
+      <button class="btn btn-ghost btn-sm" onclick="prevPhoneBookPage()" aria-label="Previous page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="phone-page-dots">${dots}</div>
+      <button class="btn btn-ghost btn-sm" onclick="nextPhoneBookPage()" aria-label="Next page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    ${pagesHtml}
+  </div>`;
 }
+
+let phoneBookPage = 0;
+
+function goToPhoneBookPage(n){
+  const book = document.getElementById('phoneBook');
+  if(!book) return;
+  const count = parseInt(book.dataset.pageCount, 10);
+  phoneBookPage = Math.max(0, Math.min(count - 1, n));
+  book.querySelectorAll('.phone-page').forEach(p => {
+    p.style.display = parseInt(p.dataset.page, 10) === phoneBookPage ? '' : 'none';
+  });
+  book.querySelectorAll('.phone-page-dot').forEach(d => {
+    d.classList.toggle('active', parseInt(d.dataset.dot, 10) === phoneBookPage);
+  });
+}
+
+function nextPhoneBookPage(){ goToPhoneBookPage(phoneBookPage + 1); }
+function prevPhoneBookPage(){ goToPhoneBookPage(phoneBookPage - 1); }
 
 function huntGroupsHTML(){
   const rowsHtml = huntGroupRows.map(hg => `<tr class="row-item">
@@ -1260,7 +1320,12 @@ function runSearch(term){
 function highlightCurrentMatch(){
   searchMatches.forEach((m, i) => m.classList.toggle('current', i === searchIndex));
   if(searchIndex >= 0){
-    searchMatches[searchIndex].scrollIntoView({ behavior:'smooth', block:'center' });
+    const match = searchMatches[searchIndex];
+    const page = match.closest('.phone-page');
+    if(page){
+      goToPhoneBookPage(parseInt(page.dataset.page, 10));
+    }
+    match.scrollIntoView({ behavior:'smooth', block:'center' });
   }
 }
 
