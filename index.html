@@ -180,11 +180,14 @@
   td.board-cell{vertical-align:top; padding:10px 8px; border-bottom:1px solid var(--border); border-left:1px solid var(--border); background:#17181A;}
   td.board-cell-empty{background:transparent;}
   .board-chip{
-    background:#1E2023; border:1px solid var(--border-strong); border-left:3px solid; border-radius:6px;
-    padding:7px 9px; font-size:11.5px; line-height:1.4; color:var(--ink);
+    background:var(--chip-color); border:1px solid var(--chip-color); border-radius:6px;
+    padding:8px 10px; font-size:11.5px; line-height:1.4; font-weight:600; color:#191A1C;
   }
   .board-chip-connector{width:1px; height:8px; background:var(--border-strong); margin:2px auto;}
-  .role-badge{display:inline-block; font-family:var(--display); font-weight:600; font-size:11.5px; padding:4px 10px; border-radius:20px; border:1px solid; text-transform:uppercase; letter-spacing:.03em;}
+  .role-badge{
+    display:inline-block; font-family:var(--display); font-weight:700; font-size:11.5px; padding:5px 12px;
+    border-radius:6px; text-transform:uppercase; letter-spacing:.03em; color:#191A1C;
+  }
 
   .tracker-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:30px;}
   .tracker-card{padding:16px 18px;}
@@ -1062,11 +1065,11 @@ function renderPhonesPage(){
    ================================================================ */
 const ROLE_ORDER = ['BDC', 'Advisor', 'Technician', 'Parts', 'Manager'];
 const ROLE_COLORS = {
-  BDC: '#4FA8E8',
-  Advisor: '#E5342A',
-  Technician: '#3FBE79',
-  Parts: '#E0B23E',
-  Manager: '#B18AE8',
+  BDC: '#E8D22E',
+  Advisor: '#E838D6',
+  Technician: '#33D66A',
+  Parts: '#F2952F',
+  Manager: '#B7B9C0',
 };
 function roleColor(role){ return ROLE_COLORS[role] || '#8B8D93'; }
 
@@ -1088,11 +1091,11 @@ function swimLaneBoardHTML(){
     const cells = phases.map(phase => {
       const steps = byRolePhase[role + '|' + phase] || [];
       if(!steps.length) return `<td class="board-cell board-cell-empty"></td>`;
-      const chips = steps.map(s => `<div class="board-chip" style="border-left-color:${roleColor(role)}">${escapeHtml(s.step_text)}</div>`).join('<div class="board-chip-connector"></div>');
+      const chips = steps.map(s => `<div class="board-chip" style="--chip-color:${roleColor(role)}">${escapeHtml(s.step_text)}</div>`).join('<div class="board-chip-connector"></div>');
       return `<td class="board-cell">${chips}</td>`;
     }).join('');
     return `<tr>
-      <td class="board-role-col"><span class="role-badge" style="background:${roleColor(role)}22; color:${roleColor(role)}; border-color:${roleColor(role)}55;">${escapeHtml(role)}</span></td>
+      <td class="board-role-col"><span class="role-badge" style="background:${roleColor(role)}">${escapeHtml(role)}</span></td>
       ${cells}
     </tr>`;
   }).join('');
@@ -1382,7 +1385,7 @@ function switchProcessSettingsSubTab(tab){
 function lifecycleSettingsTableHTML(){
   const rowsHtml = lifecycleRows.map(r => `<tr class="row-item">
     <td>${escapeHtml(r.phase)}</td>
-    <td><span class="role-badge" style="background:${roleColor(r.role)}22; color:${roleColor(r.role)}; border-color:${roleColor(r.role)}55;">${escapeHtml(r.role)}</span></td>
+    <td><span class="role-badge" style="background:${roleColor(r.role)}">${escapeHtml(r.role)}</span></td>
     <td>${escapeHtml(r.step_text)}</td>
     <td class="actions-cell">${actionButtons(r.id, 'lifecycle')}</td>
   </tr>`).join('');
