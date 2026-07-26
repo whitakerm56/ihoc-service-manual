@@ -152,6 +152,16 @@
   .mm-checklist-item svg{width:15px; height:15px; margin-top:2px; color:var(--steel); flex-shrink:0;}
   .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
 
+  /* ---------- vendors page ---------- */
+  .vendor-card{margin-bottom:18px;}
+  .vendor-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 16px 14px; border-bottom:1px solid var(--border);}
+  .vendor-name{font-family:var(--display); font-weight:600; font-size:16px;}
+  .vendor-name-empty{color:var(--ink-faint); font-weight:500; font-style:italic;}
+  .vendor-sub{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
+  .vendor-meta{display:flex; flex-wrap:wrap; gap:14px; margin-top:6px;}
+  .vendor-meta-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft);}
+  .vendor-meta-item svg{width:14px; height:14px; color:var(--steel); flex-shrink:0;}
+
   /* ---------- settings tabs ---------- */
   .settings-tabs{display:flex; gap:4px; margin-bottom:18px; border-bottom:1px solid var(--border);}
   .settings-tab{
@@ -275,7 +285,7 @@ const CONFIG = {
 const PAGES = [
   { id:'pricing',   label:'Pricing Guide',            icon:'tag',      ready:true  },
   { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
-  { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:false },
+  { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:false },
   { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:false },
   { id:'process',   label:'Process Board',             icon:'flow',     ready:false },
@@ -300,10 +310,13 @@ function icon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 let currentPage = 'pricing';
 let usingDemoData = false;
 let usingDemoDataMM = false;
+let usingDemoDataVendors = false;
 let pricingRows = [];
 let mmRows = [];
+let vendorRows = [];
 let editingId = null;
 let editingTable = 'pricing';
+let editingVendorId = null;
 let settingsTab = 'pricing';
 let searchMatches = [];
 let searchIndex = -1;
@@ -336,6 +349,8 @@ function renderNav(){
 function goTo(pageId){
   currentPage = pageId;
   const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main", "code_label": "A or B", "description": "Replace Engine Oil & Oil Filter.", "time_estimate": null}, {"id": "mmseed-20", "sort_order": 20, "code_type": "checklist", "code_label": null, "description": "Check front and rear brakes. Check brake pads and disc thickness. Check for damage. Check calipers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-30", "sort_order": 30, "code_type": "checklist", "code_label": null, "description": "Check Parking Brake Adjustment.", "time_estimate": null}, {"id": "mmseed-40", "sort_order": 40, "code_type": "checklist", "code_label": null, "description": "Inspect Tie-Rod Ends, Steering Gearbox & Gearbox Boots.", "time_estimate": null}, {"id": "mmseed-50", "sort_order": 50, "code_type": "checklist", "code_label": null, "description": "Check steering linkage.", "time_estimate": null}, {"id": "mmseed-60", "sort_order": 60, "code_type": "checklist", "code_label": null, "description": "Check Boots for Damage and Leaking Grease.", "time_estimate": null}, {"id": "mmseed-70", "sort_order": 70, "code_type": "checklist", "code_label": null, "description": "Inspect Suspension Components.", "time_estimate": null}, {"id": "mmseed-80", "sort_order": 80, "code_type": "checklist", "code_label": null, "description": "Check Condition of Ball Joint Boots for Deterioration, Damage & Tightness.", "time_estimate": null}, {"id": "mmseed-90", "sort_order": 90, "code_type": "checklist", "code_label": null, "description": "Inspect Driveshaft Boots.", "time_estimate": null}, {"id": "mmseed-100", "sort_order": 100, "code_type": "checklist", "code_label": null, "description": "Inspect Brake Hoses & Lines, Including VSA Lines.", "time_estimate": null}, {"id": "mmseed-110", "sort_order": 110, "code_type": "checklist", "code_label": null, "description": "Check Brake Master Cylinder & VSA Modulator-Control Unit for Damage or Leakage.", "time_estimate": null}, {"id": "mmseed-120", "sort_order": 120, "code_type": "checklist", "code_label": null, "description": "Inspect All Fluid Levels & Condition of Fluids. Including: Engine Coolant, Brake Fluid, Windshield Washer Fluid, Power Steering Fluid(if applicable).", "time_estimate": null}, {"id": "mmseed-130", "sort_order": 130, "code_type": "checklist", "code_label": null, "description": "Check catalytic converter heat shields. Check Exhaust Pipes. Check mufflers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-140", "sort_order": 140, "code_type": "checklist", "code_label": null, "description": "Inspect Fuel Lines & Connections.", "time_estimate": null}, {"id": "mmseed-150", "sort_order": 150, "code_type": "checklist", "code_label": null, "description": "Inspect Engine Air Cleaner Filter.", "time_estimate": null}, {"id": "mmseed-160", "sort_order": 160, "code_type": "checklist", "code_label": null, "description": "Inspect Cabin(HVAC) Filter.", "time_estimate": null}, {"id": "mmseed-1010", "sort_order": 1010, "code_type": "sub", "code_label": "1.0", "description": "Rotate Tires(if needed), Check Tire Inflation & Condition.", "time_estimate": "45 MINS - 1 HR"}, {"id": "mmseed-1020", "sort_order": 1020, "code_type": "sub", "code_label": "2.0", "description": "Replace Engine Air Cleaner Filter, Replace Cabin(HVAC) Filter.", "time_estimate": "N/A Replace on as-need basis (Inspection of filters included in A or B services)"}, {"id": "mmseed-1030", "sort_order": 1030, "code_type": "sub", "code_label": "3.0", "description": "Replace Transmission Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1040", "sort_order": 1040, "code_type": "sub", "code_label": "4.0", "description": "Replace Engine Spark Plugs, Replace Engine Valve Cover Gasket, Adjust Engine Valves, Replace Water Pump. For Vehicles Equipped with Timing Belt Add: Replace Timing Belt & Timing Belt Tensioner.", "time_estimate": "NEED CAR ALL DAY. Always confirm parts in-stock prior to customer arrival."}, {"id": "mmseed-1050", "sort_order": 1050, "code_type": "sub", "code_label": "5.0", "description": "Replace Engine Coolant.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1060", "sort_order": 1060, "code_type": "sub", "code_label": "6.0", "description": "Replace Rear Differential Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1070", "sort_order": 1070, "code_type": "sub", "code_label": "7.0", "description": "Replace Brake Fluid.", "time_estimate": "ADD 1 HR"}];
+
+const SEED_DATA_VENDORS = [{"id": "vseed-10", "sort_order": 10, "name": null, "phone": null, "lead_time": null, "notes": null, "vendor_services": [{"id": "vsseed-10", "vendor_id": "vseed-10", "sort_order": 10, "service": "Full Vehicle Detail", "cost": 210.0, "customer_price": 262.5}, {"id": "vsseed-20", "vendor_id": "vseed-10", "sort_order": 20, "service": "Interior Only Detail", "cost": 120.0, "customer_price": 150.0}, {"id": "vsseed-30", "vendor_id": "vseed-10", "sort_order": 30, "service": "Exterior Only Detail", "cost": 120.0, "customer_price": 150.0}]}, {"id": "vseed-20", "sort_order": 20, "name": null, "phone": "360-557-8016", "lead_time": "2 day lead time", "notes": null, "vendor_services": [{"id": "vsseed-40", "vendor_id": "vseed-20", "sort_order": 10, "service": "Glass Installation", "cost": 159.0, "customer_price": 198.75}, {"id": "vsseed-50", "vendor_id": "vseed-20", "sort_order": 20, "service": "Pre-collision System Calibration", "cost": 252.75, "customer_price": 315.94}]}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -372,6 +387,20 @@ async function loadMMCodes(){
     usingDemoDataMM = true;
   }
   mmRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadVendors(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/vendors`);
+    if(!res.ok) throw new Error('bad response');
+    vendorRows = await res.json();
+    usingDemoDataVendors = false;
+  }catch(err){
+    vendorRows = JSON.parse(JSON.stringify(SEED_DATA_VENDORS));
+    usingDemoDataVendors = true;
+  }
+  vendorRows.sort((a,b) => a.sort_order - b.sort_order);
+  vendorRows.forEach(v => (v.vendor_services || []).sort((a,b) => a.sort_order - b.sort_order));
 }
 
 function fmtMoney(v){
@@ -428,8 +457,8 @@ function pricingTableHTML(editable){
 
 function actionButtons(id, table){
   table = table || 'pricing';
-  const editFn = table === 'mmcodes' ? 'openMMEdit' : 'openEdit';
-  const deleteFn = table === 'mmcodes' ? 'deleteMMRow' : 'deleteRow';
+  const editFn = table === 'mmcodes' ? 'openMMEdit' : table === 'vendor' ? 'openVendorEdit' : 'openEdit';
+  const deleteFn = table === 'mmcodes' ? 'deleteMMRow' : table === 'vendor' ? 'deleteVendorRow' : 'deleteRow';
   return `<button class="btn btn-ghost btn-sm" onclick="${editFn}('${id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
   <button class="btn btn-ghost btn-sm btn-danger" onclick="${deleteFn}('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
 }
@@ -514,11 +543,91 @@ function renderMMCodesPage(){
 }
 
 /* ================================================================
+   PAGE: Vendors
+   ================================================================ */
+function vendorIdentityHTML(v){
+  if(v.name) return `<div class="vendor-name">${escapeHtml(v.name)}</div>`;
+  if(v.phone) return `<div class="vendor-name">${escapeHtml(v.phone)}</div><div class="vendor-sub">No name on file — add one in Settings</div>`;
+  return `<div class="vendor-name vendor-name-empty">Unnamed vendor</div>`;
+}
+
+function vendorMetaHTML(v){
+  const bits = [];
+  if(v.name && v.phone) bits.push(`<span class="vendor-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4.5h3l1.4 3.6-1.9 1.6a11 11 0 0 0 5.8 5.8l1.6-1.9 3.6 1.4v3a1 1 0 0 1-1.1 1C10.7 18.6 5.4 13.3 4 5.6A1 1 0 0 1 5 4.5Z"/></svg>${escapeHtml(v.phone)}</span>`);
+  if(v.lead_time) bits.push(`<span class="vendor-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${escapeHtml(v.lead_time)}</span>`);
+  if(v.notes) bits.push(`<span class="vendor-meta-item">${escapeHtml(v.notes)}</span>`);
+  return bits.length ? `<div class="vendor-meta">${bits.join('')}</div>` : '';
+}
+
+function vendorCardHTML(v, editable){
+  const services = v.vendor_services || [];
+  const rowsHtml = services.map(s => `<tr class="row-item">
+    <td>${escapeHtml(s.service)}</td>
+    <td class="num total">${fmtMoney(s.cost)}</td>
+    <td class="num total">${fmtMoney(s.customer_price)}</td>
+    ${editable ? `<td class="actions-cell">${vendorServiceActionButtons(v.id, s.id)}</td>` : ''}
+  </tr>`).join('');
+  const addServiceRow = editable ? `<tr class="row-item"><td colspan="4" style="padding:10px 14px;">
+    <button class="btn btn-sm" onclick="openServiceAdd('${v.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg> Add service</button>
+  </td></tr>` : '';
+
+  return `<div class="table-wrap vendor-card">
+    <div class="vendor-card-head">
+      <div>
+        ${vendorIdentityHTML(v)}
+        ${vendorMetaHTML(v)}
+      </div>
+      ${editable ? `<div class="actions-cell">${actionButtons(v.id, 'vendor')}</div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th>Service</th><th class="num">Cost</th><th class="num">Customer price</th>${editable ? '<th class="num">Actions</th>' : ''}</tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="${editable?4:3}" class="empty-hint">No services yet.</td></tr>`}${addServiceRow}</tbody>
+    </table>
+  </div>`;
+}
+
+function vendorServiceActionButtons(vendorId, serviceId){
+  return `<button class="btn btn-ghost btn-sm" onclick="openServiceEdit('${vendorId}','${serviceId}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
+  <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteServiceRow('${vendorId}','${serviceId}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
+}
+
+function renderVendorsPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Vendors</h2>
+        <div class="desc">Outside shops we sublet work to — cost and the price to quote the customer.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataVendors, 'vendors')}
+    ${vendorRows.map(v => vendorCardHTML(v, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet.</div></div>`}
+  `;
+}
+
+function renderVendorsSettings(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openVendorAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add vendor</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    ${demoBanner(usingDemoDataVendors, 'vendors')}
+    ${vendorRows.map(v => vendorCardHTML(v, true)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet. Add the first one.</div></div>`}
+  `;
+}
+
+/* ================================================================
    PAGE: Settings
    ================================================================ */
 const SETTINGS_TABLE_META = {
   pricing: { label: 'Pricing Guide' },
   mmcodes: { label: 'Maintenance Minder Codes' },
+  vendors: { label: 'Vendors' },
 };
 
 function settingsTabsHTML(){
@@ -545,6 +654,9 @@ function renderSettingsPage(){
       ${demoBanner(usingDemoDataMM, 'mmcodes')}
       ${mmSettingsTableHTML()}
     `;
+  }
+  if(settingsTab === 'vendors'){
+    return renderVendorsSettings();
   }
   return `
     <div class="topbar">
@@ -609,9 +721,13 @@ async function render(){
   } else if(currentPage === 'mmcodes'){
     if(mmRows.length === 0) await loadMMCodes();
     main.innerHTML = renderMMCodesPage();
+  } else if(currentPage === 'vendors'){
+    if(vendorRows.length === 0) await loadVendors();
+    main.innerHTML = renderVendorsPage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
     if(mmRows.length === 0) await loadMMCodes();
+    if(vendorRows.length === 0) await loadVendors();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -843,7 +959,176 @@ function closeModal(){
 }
 
 function handleModalSave(){
-  if(editingTable === 'mmcodes') saveMMRow(); else saveRow();
+  if(editingTable === 'mmcodes') saveMMRow();
+  else if(editingTable === 'vendor') saveVendorRow();
+  else if(editingTable === 'vendorService') saveServiceRow();
+  else saveRow();
+}
+
+function emptyVendor(){
+  return { name:'', phone:'', lead_time:'', notes:'' };
+}
+
+function openVendorAdd(){
+  editingId = null;
+  editingTable = 'vendor';
+  document.getElementById('modalTitle').textContent = 'Add vendor';
+  document.getElementById('modalBody').innerHTML = vendorModalFormHTML(emptyVendor());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openVendorEdit(id){
+  const vendor = vendorRows.find(v => v.id === id);
+  if(!vendor) return;
+  editingId = id;
+  editingTable = 'vendor';
+  document.getElementById('modalTitle').textContent = 'Edit vendor';
+  document.getElementById('modalBody').innerHTML = vendorModalFormHTML(vendor);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function vendorModalFormHTML(v){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Vendor name</label>
+        <input type="text" id="v_name" value="${escapeAttr(v.name)}" placeholder="e.g. Cascade Auto Glass">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="text" id="v_phone" value="${escapeAttr(v.phone)}" placeholder="e.g. 360-557-8016">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Lead time</label>
+        <input type="text" id="v_lead_time" value="${escapeAttr(v.lead_time)}" placeholder="e.g. 2 day lead time">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input type="text" id="v_notes" value="${escapeAttr(v.notes)}" placeholder="Optional">
+      </div>
+    </div>
+  `;
+}
+
+async function saveVendorRow(){
+  const payload = {
+    name: type_or_null(document.getElementById('v_name').value),
+    phone: type_or_null(document.getElementById('v_phone').value),
+    lead_time: type_or_null(document.getElementById('v_lead_time').value),
+    notes: type_or_null(document.getElementById('v_notes').value),
+  };
+
+  if(editingId){
+    Object.assign(vendorRows.find(v => v.id === editingId), payload);
+    if(!usingDemoDataVendors){
+      try{ await fetch(`${CONFIG.API_BASE}/vendors/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newVendor = { id: 'local-' + Date.now(), sort_order: (vendorRows.at(-1)?.sort_order || 0) + 10, vendor_services: [], ...payload };
+    vendorRows.push(newVendor);
+    if(!usingDemoDataVendors){
+      try{ await fetch(`${CONFIG.API_BASE}/vendors`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newVendor)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteVendorRow(id){
+  if(!confirm('Delete this vendor and all of its services? This can\'t be undone.')) return;
+  vendorRows = vendorRows.filter(v => v.id !== id);
+  if(!usingDemoDataVendors){
+    try{ await fetch(`${CONFIG.API_BASE}/vendors/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+function emptyService(){
+  return { service:'', cost:'', customer_price:'' };
+}
+
+function openServiceAdd(vendorId){
+  editingId = null;
+  editingTable = 'vendorService';
+  editingVendorId = vendorId;
+  document.getElementById('modalTitle').textContent = 'Add service';
+  document.getElementById('modalBody').innerHTML = serviceModalFormHTML(emptyService());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openServiceEdit(vendorId, serviceId){
+  const vendor = vendorRows.find(v => v.id === vendorId);
+  const service = vendor && (vendor.vendor_services || []).find(s => s.id === serviceId);
+  if(!service) return;
+  editingId = serviceId;
+  editingTable = 'vendorService';
+  editingVendorId = vendorId;
+  document.getElementById('modalTitle').textContent = 'Edit service';
+  document.getElementById('modalBody').innerHTML = serviceModalFormHTML(service);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function serviceModalFormHTML(s){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Service</label>
+        <input type="text" id="s_service" value="${escapeAttr(s.service)}" placeholder="e.g. Full Vehicle Detail">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cost</label>
+        <input type="number" step="0.01" id="s_cost" value="${s.cost ?? ''}">
+      </div>
+      <div class="field">
+        <label>Customer price</label>
+        <input type="number" step="0.01" id="s_customer_price" value="${s.customer_price ?? ''}">
+      </div>
+    </div>
+  `;
+}
+
+async function saveServiceRow(){
+  const vendor = vendorRows.find(v => v.id === editingVendorId);
+  if(!vendor) return;
+  const payload = {
+    service: document.getElementById('s_service').value.trim(),
+    cost: numOrNull(document.getElementById('s_cost').value),
+    customer_price: numOrNull(document.getElementById('s_customer_price').value),
+  };
+  if(!payload.service){
+    alert('Service name is required.');
+    return;
+  }
+  if(!vendor.vendor_services) vendor.vendor_services = [];
+
+  if(editingId){
+    Object.assign(vendor.vendor_services.find(s => s.id === editingId), payload);
+    if(!usingDemoDataVendors){
+      try{ await fetch(`${CONFIG.API_BASE}/vendor-services/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newService = { id: 'local-' + Date.now(), vendor_id: vendor.id, sort_order: (vendor.vendor_services.at(-1)?.sort_order || 0) + 10, ...payload };
+    vendor.vendor_services.push(newService);
+    if(!usingDemoDataVendors){
+      try{ await fetch(`${CONFIG.API_BASE}/vendor-services`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newService)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteServiceRow(vendorId, serviceId){
+  if(!confirm('Delete this service? This can\'t be undone.')) return;
+  const vendor = vendorRows.find(v => v.id === vendorId);
+  if(vendor) vendor.vendor_services = (vendor.vendor_services || []).filter(s => s.id !== serviceId);
+  if(!usingDemoDataVendors){
+    try{ await fetch(`${CONFIG.API_BASE}/vendor-services/${serviceId}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
 }
 
 function modalFormHTML(r){
