@@ -367,7 +367,7 @@ function pricingTableHTML(editable){
   return `<div class="table-wrap"><table>
     <thead><tr>
       <th>MM code</th><th>Description</th><th class="num">Labor hrs</th><th class="num">Labor $</th>
-      <th class="num">Rate</th><th class="num">Parts</th><th class="num">Total</th>
+      <th class="num">Labor rate</th><th class="num">Parts</th><th class="num">Total</th>
       ${editable?'<th class="num">Actions</th>':''}
     </tr></thead>
     <tbody>${rowsHtml || `<tr><td colspan="8" class="empty-hint">No rows yet. Add the first one.</td></tr>`}</tbody>
