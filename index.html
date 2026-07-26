@@ -169,13 +169,15 @@
   .mm-number-chip{font-family:var(--display); font-weight:600; background:var(--steel-light); border-color:transparent; color:var(--steel);}
 
   /* ---------- org chart ---------- */
-  .org-tree{display:flex; flex-direction:column; align-items:center; margin-bottom:8px;}
-  .org-tree-connector-down{width:2px; height:26px; background:var(--border-strong);}
-  .org-tree-row{display:flex; gap:28px; flex-wrap:wrap; justify-content:center; border-top:2px solid var(--border-strong); padding-top:26px; position:relative;}
-  .org-tree-branch{position:relative;}
+  .org-tree-scroll{overflow-x:auto; padding:4px 4px 16px;}
+  .org-tree{display:flex; flex-direction:column; align-items:center; width:max-content; margin:0 auto;}
+  .org-tree-branch{display:flex; flex-direction:column; align-items:center; position:relative;}
   .org-tree-branch::before{content:''; position:absolute; top:-26px; left:50%; width:2px; height:26px; background:var(--border-strong);}
+  .org-tree > .org-tree-branch::before{display:none;}
+  .org-tree-connector-down{width:2px; height:26px; background:var(--border-strong);}
+  .org-tree-row{display:flex; gap:28px; flex-wrap:nowrap; justify-content:center; align-items:flex-start; border-top:2px solid var(--border-strong); padding-top:26px; position:relative; margin-top:0;}
 
-  .person-card{display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; width:150px;}
+  .person-card{display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; width:150px; flex-shrink:0;}
   .person-avatar{border-radius:50%; object-fit:cover; border:2px solid var(--border-strong); flex-shrink:0;}
   .person-avatar-initials{display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; border-style:solid; border-width:2px;}
   .person-info{display:flex; flex-direction:column; align-items:center; gap:2px;}
@@ -185,18 +187,8 @@
   .person-meta .chip{font-size:9.5px; padding:1px 6px;}
   .person-schedule{font-size:9.5px; color:var(--ink-faint); margin-top:2px; line-height:1.3;}
 
-  .org-team-section{margin-bottom:30px;}
-  .org-team-head{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
-  .org-team-dot{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
-  .org-team-title{font-family:var(--display); font-weight:600; font-size:14px; color:var(--ink);}
-  .org-team-grid{display:flex; flex-wrap:wrap; gap:22px 18px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px;}
-
   .photo-upload-row{display:flex; align-items:center; gap:14px;}
   .photo-uploading{width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--ink-faint); border:2px dashed var(--border-strong); text-align:center;}
-
-  @media (max-width: 700px){
-    .org-team-grid{justify-content:center;}
-  }
 
   /* ---------- process board ---------- */
   .board-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
@@ -1248,37 +1240,26 @@ function personCardHTML(emp){
   </div>`;
 }
 
+function renderOrgSubtree(emp){
+  const children = orgRows.filter(r => r.reports_to === emp.id);
+  if(!children.length){
+    return `<div class="org-tree-branch">${personCardHTML(emp)}</div>`;
+  }
+  return `<div class="org-tree-branch org-tree-has-children">
+    ${personCardHTML(emp)}
+    <div class="org-tree-connector-down"></div>
+    <div class="org-tree-row">
+      ${children.map(c => renderOrgSubtree(c)).join('')}
+    </div>
+  </div>`;
+}
+
 function orgChartHTML(){
   const root = orgRows.find(r => !r.reports_to);
   if(!root){
     return `<div class="table-wrap"><div class="empty-hint">No org chart data yet.</div></div>`;
   }
-  const managers = orgRows.filter(r => r.reports_to === root.id);
-
-  const treeHtml = `
-    <div class="org-tree">
-      <div class="org-tree-root">${personCardHTML(root)}</div>
-      <div class="org-tree-connector-down"></div>
-      <div class="org-tree-row">
-        ${managers.map(m => `<div class="org-tree-branch">${personCardHTML(m)}</div>`).join('')}
-      </div>
-    </div>`;
-
-  const teamsHtml = managers.map(m => {
-    const reports = orgRows.filter(r => r.reports_to === m.id);
-    if(!reports.length) return '';
-    return `<div class="org-team-section">
-      <div class="org-team-head">
-        <span class="org-team-dot" style="background:${deptColor(m.department)}"></span>
-        <span class="org-team-title">${escapeHtml(m.title)}${m.is_tbd ? '' : ' — ' + escapeHtml(m.name)}</span>
-      </div>
-      <div class="org-team-grid">
-        ${reports.map(r => personCardHTML(r)).join('')}
-      </div>
-    </div>`;
-  }).filter(Boolean).join('');
-
-  return treeHtml + teamsHtml;
+  return `<div class="org-tree-scroll"><div class="org-tree">${renderOrgSubtree(root)}</div></div>`;
 }
 
 function renderOrgChartPage(){
