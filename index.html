@@ -177,6 +177,7 @@
     color:var(--amber); border:1px solid #5C441C; background:var(--amber-light); padding:2px 6px; border-radius:10px;
   }
   .fluid-dot{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px; vertical-align:middle;}
+  .ink-faint-text{color:var(--ink-faint);}
   .settings-tabs-sub{margin-top:-8px; margin-bottom:16px; border-bottom:1px solid var(--border);}
   .settings-tabs-sub .settings-tab{font-size:12px; margin-right:14px; padding:6px 4px;}
 
@@ -315,7 +316,7 @@ const PAGES = [
   { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
-  { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:false },
+  { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:true  },
   { id:'process',   label:'Process Board',             icon:'flow',     ready:false },
   { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:false },
   { id:'schedule',  label:'Employee Schedule',         icon:'calendar', ready:false },
@@ -342,17 +343,22 @@ let usingDemoDataVendors = false;
 let usingDemoDataOilGuide = false;
 let usingDemoDataOtherFluids = false;
 let usingDemoDataFluidParts = false;
+let usingDemoDataPhones = false;
+let usingDemoDataHuntGroups = false;
 let pricingRows = [];
 let mmRows = [];
 let vendorRows = [];
 let engineOilRows = [];
 let otherFluidsRows = [];
 let fluidPartsRows = [];
+let phoneRows = [];
+let huntGroupRows = [];
 let editingId = null;
 let editingTable = 'pricing';
 let editingVendorId = null;
 let settingsTab = 'pricing';
 let oilSettingsSubTab = 'engine';
+let phoneSettingsSubTab = 'directory';
 let searchMatches = [];
 let searchIndex = -1;
 
@@ -390,6 +396,9 @@ const SEED_DATA_VENDORS = [{"id": "vseed-10", "sort_order": 10, "name": null, "p
 const SEED_DATA_OILGUIDE = [{"id": "oilseed-10", "sort_order": 10, "model": "Accord L4 & V6", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-20", "sort_order": 20, "model": "Accord L4 & V6", "year_start": 2001, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-30", "sort_order": 30, "model": "Accord L4 & V6", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-40", "sort_order": 40, "model": "Accord Hybrid", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-50", "sort_order": 50, "model": "Civic", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-60", "sort_order": 60, "model": "Civic", "year_start": 2001, "year_end": 2010, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2010, "verified": true}, {"id": "oilseed-70", "sort_order": 70, "model": "Civic", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-80", "sort_order": 80, "model": "Civic GX", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-90", "sort_order": 90, "model": "Civic GX", "year_start": 2002, "year_end": 2013, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-100", "sort_order": 100, "model": "Civic Hybrid", "year_start": 2006, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-110", "sort_order": 110, "model": "Civic Si", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-120", "sort_order": 120, "model": "Civic Si", "year_start": 2001, "year_end": 2004, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-130", "sort_order": 130, "model": "Civic Si", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-140", "sort_order": 140, "model": "Civic Si", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-150", "sort_order": 150, "model": "Crosstour", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-160", "sort_order": 160, "model": "CR-V", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-170", "sort_order": 170, "model": "CR-V", "year_start": 2002, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-180", "sort_order": 180, "model": "CR-V", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-190", "sort_order": 190, "model": "CR-Z", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-200", "sort_order": 200, "model": "Element", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-210", "sort_order": 210, "model": "Element", "year_start": 2010, "year_end": 2011, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-220", "sort_order": 220, "model": "Fit", "year_start": 2007, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2008, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-230", "sort_order": 230, "model": "Fit", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-240", "sort_order": 240, "model": "Insight", "year_start": 2000, "year_end": 2006, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-250", "sort_order": 250, "model": "Insight", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-260", "sort_order": 260, "model": "Odyssey", "year_start": 1999, "year_end": 2004, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-270", "sort_order": 270, "model": "Odyssey", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-280", "sort_order": 280, "model": "Odyssey", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-290", "sort_order": 290, "model": "Pilot", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-300", "sort_order": 300, "model": "Pilot", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-310", "sort_order": 310, "model": "Ridgeline", "year_start": 2006, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2006, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-320", "sort_order": 320, "model": "Ridgeline", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-330", "sort_order": 330, "model": "S2000", "year_start": 1999, "year_end": 2009, "oil_weight": "10W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}];
 const SEED_DATA_FLUIDPARTS = [{"id": "fpseed-10", "sort_order": 10, "fluid_name": "ATF-DW1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9008", "color_hex": "#1E6FD9", "notes": null, "verified": true}, {"id": "fpseed-20", "sort_order": 20, "fluid_name": "ATF-Type 2.0", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9015*", "color_hex": "#E8C93A", "notes": null, "verified": true}, {"id": "fpseed-30", "sort_order": 30, "fluid_name": "ATF-Type 3.1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9017", "color_hex": "#C23A8B", "notes": null, "verified": true}, {"id": "fpseed-40", "sort_order": 40, "fluid_name": "CVT Fluid", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9006", "color_hex": "#4C6B2F", "notes": null, "verified": true}, {"id": "fpseed-50", "sort_order": 50, "fluid_name": "HCF-2", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-HCF2", "color_hex": "#D9A61E", "notes": null, "verified": true}, {"id": "fpseed-60", "sort_order": 60, "fluid_name": "MTF", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08798-9031", "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-70", "sort_order": 70, "fluid_name": "Dual Pump Fluid (DPSF II)", "fluid_category": "Rear Differential", "container": "Quart", "part_number": "08200-9007", "color_hex": "#C1622A", "notes": null, "verified": true}, {"id": "fpseed-80", "sort_order": 80, "fluid_name": "VTM-4", "fluid_category": "Rear Differential", "container": "Gallon", "part_number": "08200-9014**", "color_hex": "#7FB6D9", "notes": null, "verified": true}, {"id": "fpseed-90", "sort_order": 90, "fluid_name": "HGO-1", "fluid_category": "Transfer Assembly Fluid", "container": "Quart", "part_number": null, "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-100", "sort_order": 100, "fluid_name": "Antifreeze/Coolant Type 2", "fluid_category": "Antifreeze/Coolant", "container": "Gallon", "part_number": "01999-9011", "color_hex": "#4F9B3E", "notes": null, "verified": true}, {"id": "fpseed-110", "sort_order": 110, "fluid_name": "DOT-3", "fluid_category": "Brake Fluid", "container": "12 fl oz", "part_number": "08798-9008", "color_hex": "#3A2E8C", "notes": null, "verified": true}, {"id": "fpseed-120", "sort_order": 120, "fluid_name": "Power Steering Fluid", "fluid_category": "Power Steering Fluid", "container": "12 fl oz", "part_number": "08206-9002", "color_hex": "#C0392B", "notes": null, "verified": true}, {"id": "fpseed-130", "sort_order": 130, "fluid_name": "Washer Concentrate/Antifreeze", "fluid_category": "Windshield Washer", "container": "16 fl oz", "part_number": "08798-9025", "color_hex": "#B3A6D9", "notes": null, "verified": true}];
 const SEED_DATA_OTHERFLUIDS = [{"id": "ofseed-10", "sort_order": 10, "model": "Accord", "trim": "E-CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": true}, {"id": "ofseed-20", "sort_order": 20, "model": "Accord", "trim": "E-CVT Trans (Plug-in)", "fluid_name": "CVT Fluid", "year_start": 2014, "year_end": null, "verified": true}, {"id": "ofseed-30", "sort_order": 30, "model": "Accord", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2018, "year_end": null, "verified": true}, {"id": "ofseed-40", "sort_order": 40, "model": "Accord", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2017, "verified": true}, {"id": "ofseed-50", "sort_order": 50, "model": "Civic", "trim": "CVT Trans (Hybrid)", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2015, "verified": true}, {"id": "ofseed-60", "sort_order": 60, "model": "Civic", "trim": "CVT 2nd Gen Trans", "fluid_name": "CVT Fluid", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-70", "sort_order": 70, "model": "Crosstour", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": 2015, "verified": true}, {"id": "ofseed-80", "sort_order": 80, "model": "CR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2010, "year_end": null, "verified": true}, {"id": "ofseed-90", "sort_order": 90, "model": "CR-Z", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2011, "year_end": 2016, "verified": true}, {"id": "ofseed-100", "sort_order": 100, "model": "Element", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": 2011, "verified": true}, {"id": "ofseed-110", "sort_order": 110, "model": "Fit", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2015, "year_end": null, "verified": true}, {"id": "ofseed-120", "sort_order": 120, "model": "HR-V", "trim": "CVT 2nd Gen Trans", "fluid_name": "HCF-2", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-130", "sort_order": 130, "model": "HR-V", "trim": "Rear Differential", "fluid_name": "Dual Pump Fluid (DPSF II)", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-140", "sort_order": 140, "model": "Insight", "trim": "CVT Transmission", "fluid_name": "CVT Fluid", "year_start": 2005, "year_end": 2006, "verified": true}, {"id": "ofseed-150", "sort_order": 150, "model": "Pilot", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2016, "year_end": null, "verified": true}, {"id": "ofseed-160", "sort_order": 160, "model": "Pilot", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2005, "year_end": null, "verified": true}, {"id": "ofseed-170", "sort_order": 170, "model": "Passport", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2019, "year_end": null, "verified": true}, {"id": "ofseed-180", "sort_order": 180, "model": "Passport", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2019, "year_end": null, "verified": true}, {"id": "ofseed-190", "sort_order": 190, "model": "Ridgeline", "trim": "Rear Differential", "fluid_name": "VTM-4", "year_start": 2006, "year_end": null, "verified": true}, {"id": "ofseed-200", "sort_order": 200, "model": "Odyssey", "trim": "Transmission (XAT)", "fluid_name": "ATF-DW1", "year_start": 2005, "year_end": 2010, "verified": true}, {"id": "ofseed-210", "sort_order": 210, "model": "Odyssey", "trim": "Transmission (9AT)", "fluid_name": "ATF-Type 3.1", "year_start": 2018, "year_end": null, "verified": true}, {"id": "ofseed-220", "sort_order": 220, "model": "All", "trim": "Transfer Assembly", "fluid_name": "HGO-1", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-230", "sort_order": 230, "model": "All", "trim": "Manual Transmission", "fluid_name": "MTF", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-240", "sort_order": 240, "model": "All", "trim": "Non-CVT Transmission", "fluid_name": "ATF-DW1", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-250", "sort_order": 250, "model": "All", "trim": "Antifreeze", "fluid_name": "Antifreeze/Coolant Type 2", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-260", "sort_order": 260, "model": "All", "trim": "Brake Fluid", "fluid_name": "DOT-3", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-270", "sort_order": 270, "model": "All", "trim": "Power Steering Fluid", "fluid_name": "Power Steering Fluid", "year_start": null, "year_end": null, "verified": true}, {"id": "ofseed-280", "sort_order": 280, "model": "All", "trim": "Windshield Washer", "fluid_name": "Washer Concentrate/Antifreeze", "year_start": null, "year_end": null, "verified": true}];
+
+const SEED_DATA_PHONES = [{"id": "pxseed-10", "sort_order": 10, "name": "Mason Whitaker", "role": "Service & Parts Director", "area": "Management", "extension": "200"}, {"id": "pxseed-20", "sort_order": 20, "name": "Kaci Phansisay", "role": "Advisor 1", "area": "Service Reception", "extension": "203"}, {"id": "pxseed-30", "sort_order": 30, "name": "Danny Pagel Jensen", "role": "Advisor 2", "area": "Service Reception", "extension": "202"}, {"id": "pxseed-40", "sort_order": 40, "name": "Waylon Foote", "role": "Advisor 3", "area": "Service Reception", "extension": "204"}, {"id": "pxseed-50", "sort_order": 50, "name": "Tara Gray", "role": "Receptionist", "area": "Front Office", "extension": "700"}, {"id": "pxseed-60", "sort_order": 60, "name": "Jared Scherieble", "role": "Parts Manager", "area": "Parts Department", "extension": "300"}, {"id": "pxseed-70", "sort_order": 70, "name": "Stuart Wilson", "role": "Parts Associate", "area": "Parts Department", "extension": "304"}, {"id": "pxseed-80", "sort_order": 80, "name": null, "role": "Parts Front Counter", "area": "Parts Department", "extension": "301"}, {"id": "pxseed-90", "sort_order": 90, "name": null, "role": "Parts Back Counter", "area": "Parts Department", "extension": "303"}, {"id": "pxseed-100", "sort_order": 100, "name": null, "role": "BDC 1", "area": "BDC", "extension": "602"}, {"id": "pxseed-110", "sort_order": 110, "name": null, "role": "BDC 2", "area": "BDC", "extension": "601"}, {"id": "pxseed-120", "sort_order": 120, "name": "Zach Anderson", "role": "Rack 1", "area": "Shop Floor", "extension": null}, {"id": "pxseed-130", "sort_order": 130, "name": "Tate Tornow / Kyen Phansisay", "role": "Rack 2 & 3", "area": "Shop Floor", "extension": "205"}, {"id": "pxseed-140", "sort_order": 140, "name": "Erick Hinchcliff", "role": "Rack 4 & 5", "area": "Shop Floor", "extension": "112"}, {"id": "pxseed-150", "sort_order": 150, "name": "Jesse Wharton", "role": "Rack 6 & 7", "area": "Shop Floor", "extension": "208"}, {"id": "pxseed-160", "sort_order": 160, "name": "Kassandra Pomme", "role": "Rack 8 & 9", "area": "Shop Floor", "extension": "209"}, {"id": "pxseed-170", "sort_order": 170, "name": null, "role": "Detail", "area": "Shop Floor", "extension": "206"}, {"id": "pxseed-180", "sort_order": 180, "name": null, "role": "Alignment", "area": "Shop Floor", "extension": null}, {"id": "pxseed-190", "sort_order": 190, "name": null, "role": "EV Bay (No Lift)", "area": "Shop Floor", "extension": null}];
+const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_number": "1112", "group_name": "BDC / Reception", "members": "601, 602, 700"}, {"id": "hgseed-20", "sort_order": 20, "group_number": "1105", "group_name": "Service Advisors", "members": "200, 202, 203, 204"}, {"id": "hgseed-30", "sort_order": 30, "group_number": "1108", "group_name": "Parts", "members": "300, 301, 303, 304"}, {"id": "hgseed-40", "sort_order": 40, "group_number": "1106", "group_name": "Technicians", "members": "112, 205, 208, 209"}];
 
 renderNav();
   const searchInput = document.getElementById('pageSearchInput');
@@ -481,6 +490,32 @@ async function loadFluidParts(){
   fluidPartsRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
+async function loadPhones(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/phones`);
+    if(!res.ok) throw new Error('bad response');
+    phoneRows = await res.json();
+    usingDemoDataPhones = false;
+  }catch(err){
+    phoneRows = JSON.parse(JSON.stringify(SEED_DATA_PHONES));
+    usingDemoDataPhones = true;
+  }
+  phoneRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadHuntGroups(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/huntgroups`);
+    if(!res.ok) throw new Error('bad response');
+    huntGroupRows = await res.json();
+    usingDemoDataHuntGroups = false;
+  }catch(err){
+    huntGroupRows = JSON.parse(JSON.stringify(SEED_DATA_HUNTGROUPS));
+    usingDemoDataHuntGroups = true;
+  }
+  huntGroupRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
 function fmtMoney(v){
   if(v === null || v === undefined || v === '') return '';
   return '$' + Number(v).toFixed(2);
@@ -540,6 +575,8 @@ const TABLE_ACTIONS = {
   oilguide:     { edit: 'openOilEdit',        delete: 'deleteOilRow' },
   otherfluids:  { edit: 'openOtherFluidEdit', delete: 'deleteOtherFluidRow' },
   fluidparts:   { edit: 'openFluidPartEdit',  delete: 'deleteFluidPartRow' },
+  phones:       { edit: 'openPhoneEdit',      delete: 'deletePhoneRow' },
+  huntgroups:   { edit: 'openHuntGroupEdit',  delete: 'deleteHuntGroupRow' },
 };
 
 function actionButtons(id, table){
@@ -817,6 +854,58 @@ function renderOilGuidePage(){
 }
 
 /* ================================================================
+   PAGE: Phone Extensions
+   ================================================================ */
+function phoneDirectoryHTML(){
+  const byArea = new Map();
+  phoneRows.forEach(r => {
+    if(!byArea.has(r.area)) byArea.set(r.area, []);
+    byArea.get(r.area).push(r);
+  });
+
+  return Array.from(byArea.entries()).map(([area, rows]) => {
+    const rowsHtml = rows.map(r => `<tr class="row-item">
+      <td>${r.name ? escapeHtml(r.name) : `<span class="ink-faint-text">—</span>`}</td>
+      <td>${escapeHtml(r.role)}</td>
+      <td class="mono num">${r.extension ? `<span class="chip mm-number-chip">${escapeHtml(r.extension)}</span>` : ''}</td>
+    </tr>`).join('');
+    return `<div class="section-label">${escapeHtml(area)}</div>
+    <div class="table-wrap" style="margin-bottom:22px;"><table>
+      <thead><tr><th>Name</th><th>Role / station</th><th class="num" style="width:100px">Extension</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>`;
+  }).join('');
+}
+
+function huntGroupsHTML(){
+  const rowsHtml = huntGroupRows.map(hg => `<tr class="row-item">
+    <td class="mono">${escapeHtml(hg.group_number)}</td>
+    <td>${escapeHtml(hg.group_name)}</td>
+    <td class="mono">${escapeHtml(hg.members)}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:100px">Group #</th><th style="width:160px">Rings</th><th>Member extensions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="3" class="empty-hint">No hunt groups yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderPhonesPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Phone extensions</h2>
+        <div class="desc">Who to call and where they sit. Search by name in the sidebar to find someone fast.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataPhones, 'phones')}
+    ${phoneDirectoryHTML()}
+    <div class="section-label">Hunt groups</div>
+    <div class="desc" style="margin-bottom:12px;">Dialing any member of a hunt group rings every extension in it at once.</div>
+    ${huntGroupsHTML()}
+  `;
+}
+
+/* ================================================================
    PAGE: Settings
    ================================================================ */
 const SETTINGS_TABLE_META = {
@@ -824,6 +913,7 @@ const SETTINGS_TABLE_META = {
   mmcodes: { label: 'Maintenance Minder Codes' },
   vendors: { label: 'Vendors' },
   oilguide: { label: 'Oil Application Guide' },
+  phones: { label: 'Phone Extensions' },
 };
 
 function settingsTabsHTML(){
@@ -856,6 +946,9 @@ function renderSettingsPage(){
   }
   if(settingsTab === 'oilguide'){
     return renderOilGuideSettings();
+  }
+  if(settingsTab === 'phones'){
+    return renderPhonesSettings();
   }
   return `
     <div class="topbar">
@@ -971,6 +1064,67 @@ function renderOilGuideSettings(){
   `;
 }
 
+function switchPhoneSettingsSubTab(tab){
+  phoneSettingsSubTab = tab;
+  render();
+}
+
+function phoneSettingsTableHTML(){
+  const rowsHtml = phoneRows.map(r => `<tr class="row-item">
+    <td>${r.name ? escapeHtml(r.name) : ''}</td>
+    <td>${escapeHtml(r.role)}</td>
+    <td>${escapeHtml(r.area)}</td>
+    <td class="mono">${r.extension ? escapeHtml(r.extension) : ''}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'phones')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Role / station</th><th style="width:140px">Area</th><th style="width:90px">Extension</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rows yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function huntGroupSettingsTableHTML(){
+  const rowsHtml = huntGroupRows.map(hg => `<tr class="row-item">
+    <td class="mono">${escapeHtml(hg.group_number)}</td>
+    <td>${escapeHtml(hg.group_name)}</td>
+    <td class="mono">${escapeHtml(hg.members)}</td>
+    <td class="actions-cell">${actionButtons(hg.id, 'huntgroups')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th style="width:100px">Group #</th><th style="width:160px">Rings</th><th>Member extensions</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No hunt groups yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderPhonesSettings(){
+  const subTabs = [
+    { key:'directory', label:'Directory', addFn:'openPhoneAdd' },
+    { key:'huntgroups', label:'Hunt Groups', addFn:'openHuntGroupAdd' },
+  ];
+  const active = subTabs.find(t => t.key === phoneSettingsSubTab) || subTabs[0];
+  const content = phoneSettingsSubTab === 'huntgroups' ? huntGroupSettingsTableHTML() : phoneSettingsTableHTML();
+  const isDemo = phoneSettingsSubTab === 'huntgroups' ? usingDemoDataHuntGroups : usingDemoDataPhones;
+  const endpoint = phoneSettingsSubTab === 'huntgroups' ? 'huntgroups' : 'phones';
+
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="${active.addFn}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    <div class="settings-tabs settings-tabs-sub">
+      ${subTabs.map(t => `<button class="settings-tab${phoneSettingsSubTab === t.key ? ' active' : ''}" onclick="switchPhoneSettingsSubTab('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    ${demoBanner(isDemo, endpoint)}
+    ${content}
+  `;
+}
+
 function mmSettingsTableHTML(){
   const typeLabels = { main:'Main code', checklist:'Checklist item', sub:'Number code' };
   const rowsHtml = mmRows.map(r => `<tr class="row-item">
@@ -1021,6 +1175,10 @@ async function render(){
     if(fluidPartsRows.length === 0) await loadFluidParts();
     if(otherFluidsRows.length === 0) await loadOtherFluids();
     main.innerHTML = renderOilGuidePage();
+  } else if(currentPage === 'phones'){
+    if(phoneRows.length === 0) await loadPhones();
+    if(huntGroupRows.length === 0) await loadHuntGroups();
+    main.innerHTML = renderPhonesPage();
   } else if(currentPage === 'settings'){
     if(pricingRows.length === 0) await loadPricing();
     if(mmRows.length === 0) await loadMMCodes();
@@ -1028,6 +1186,8 @@ async function render(){
     if(engineOilRows.length === 0) await loadEngineOil();
     if(fluidPartsRows.length === 0) await loadFluidParts();
     if(otherFluidsRows.length === 0) await loadOtherFluids();
+    if(phoneRows.length === 0) await loadPhones();
+    if(huntGroupRows.length === 0) await loadHuntGroups();
     main.innerHTML = renderSettingsPage();
   } else {
     const page = PAGES.find(p => p.id === currentPage);
@@ -1265,6 +1425,8 @@ function handleModalSave(){
   else if(editingTable === 'oilguide') saveOilRow();
   else if(editingTable === 'otherfluids') saveOtherFluidRow();
   else if(editingTable === 'fluidparts') saveFluidPartRow();
+  else if(editingTable === 'phones') savePhoneRow();
+  else if(editingTable === 'huntgroups') saveHuntGroupRow();
   else saveRow();
 }
 
@@ -1769,6 +1931,171 @@ async function toggleFluidPartVerified(id){
   row.verified = !row.verified;
   if(!usingDemoDataFluidParts){
     try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Phone Extensions CRUD ---------- */
+function emptyPhoneRow(){
+  return { name:'', role:'', area:'', extension:'' };
+}
+
+function openPhoneAdd(){
+  editingId = null;
+  editingTable = 'phones';
+  document.getElementById('modalTitle').textContent = 'Add phone entry';
+  document.getElementById('modalBody').innerHTML = phoneModalFormHTML(emptyPhoneRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openPhoneEdit(id){
+  const row = phoneRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'phones';
+  document.getElementById('modalTitle').textContent = 'Edit phone entry';
+  document.getElementById('modalBody').innerHTML = phoneModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function phoneModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="p_name" value="${escapeAttr(r.name)}" placeholder="Optional — blank for shared station phones">
+      </div>
+      <div class="field">
+        <label>Extension</label>
+        <input type="text" id="p_extension" value="${escapeAttr(r.extension)}" placeholder="e.g. 200">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Role / station</label>
+        <input type="text" id="p_role" value="${escapeAttr(r.role)}" placeholder="e.g. Advisor 1, Rack 2 & 3">
+      </div>
+      <div class="field">
+        <label>Area</label>
+        <input type="text" id="p_area" value="${escapeAttr(r.area)}" placeholder="e.g. Shop Floor, Parts Department">
+      </div>
+    </div>
+  `;
+}
+
+async function savePhoneRow(){
+  const payload = {
+    name: type_or_null(document.getElementById('p_name').value),
+    role: document.getElementById('p_role').value.trim(),
+    area: document.getElementById('p_area').value.trim(),
+    extension: type_or_null(document.getElementById('p_extension').value),
+  };
+  if(!payload.role || !payload.area){
+    alert('Role/station and area are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(phoneRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataPhones){
+      try{ await fetch(`${CONFIG.API_BASE}/phones/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (phoneRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    phoneRows.push(newRow);
+    if(!usingDemoDataPhones){
+      try{ await fetch(`${CONFIG.API_BASE}/phones`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deletePhoneRow(id){
+  if(!confirm('Delete this entry? This can\'t be undone.')) return;
+  phoneRows = phoneRows.filter(r => r.id !== id);
+  if(!usingDemoDataPhones){
+    try{ await fetch(`${CONFIG.API_BASE}/phones/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+/* ---------- Hunt Groups CRUD ---------- */
+function emptyHuntGroup(){
+  return { group_number:'', group_name:'', members:'' };
+}
+
+function openHuntGroupAdd(){
+  editingId = null;
+  editingTable = 'huntgroups';
+  document.getElementById('modalTitle').textContent = 'Add hunt group';
+  document.getElementById('modalBody').innerHTML = huntGroupModalFormHTML(emptyHuntGroup());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openHuntGroupEdit(id){
+  const row = huntGroupRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'huntgroups';
+  document.getElementById('modalTitle').textContent = 'Edit hunt group';
+  document.getElementById('modalBody').innerHTML = huntGroupModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function huntGroupModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Group number</label>
+        <input type="text" id="hg_group_number" value="${escapeAttr(r.group_number)}" placeholder="e.g. 1105">
+      </div>
+      <div class="field">
+        <label>Rings (group name)</label>
+        <input type="text" id="hg_group_name" value="${escapeAttr(r.group_name)}" placeholder="e.g. Service Advisors">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Member extensions</label>
+        <input type="text" id="hg_members" value="${escapeAttr(r.members)}" placeholder="e.g. 200, 202, 203, 204">
+      </div>
+    </div>
+  `;
+}
+
+async function saveHuntGroupRow(){
+  const payload = {
+    group_number: document.getElementById('hg_group_number').value.trim(),
+    group_name: document.getElementById('hg_group_name').value.trim(),
+    members: document.getElementById('hg_members').value.trim(),
+  };
+  if(!payload.group_number || !payload.group_name){
+    alert('Group number and name are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(huntGroupRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataHuntGroups){
+      try{ await fetch(`${CONFIG.API_BASE}/huntgroups/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (huntGroupRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    huntGroupRows.push(newRow);
+    if(!usingDemoDataHuntGroups){
+      try{ await fetch(`${CONFIG.API_BASE}/huntgroups`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteHuntGroupRow(id){
+  if(!confirm('Delete this hunt group? This can\'t be undone.')) return;
+  huntGroupRows = huntGroupRows.filter(r => r.id !== id);
+  if(!usingDemoDataHuntGroups){
+    try{ await fetch(`${CONFIG.API_BASE}/huntgroups/${id}`, {method:'DELETE'}); }catch(e){}
   }
   render();
 }
