@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IHOC Service Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#21232A; --ink-soft:#5B5D63; --ink-faint:#8B8D93;
+    --paper:#F6F4EE; --card:#FFFFFF;
+    --border:#E1DDD1; --border-strong:#CBC5B4;
+    --sidebar-bg:#1B1D21; --sidebar-text:#C9CAD1; --sidebar-text-dim:#75777E;
+    --sidebar-active:#282B31;
+    --brick:#B3402F; --brick-dark:#7E2C20; --brick-light:#F3E3E0;
+    --steel:#3F5A6E; --steel-light:#E7EEF2;
+    --amber:#A9701E; --amber-light:#F5EAD6;
+    --mono:'IBM Plex Mono', monospace;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--body); background:var(--paper); color:var(--ink); font-size:14px;}
+  a{color:inherit;}
+
+  /* ---------- layout ---------- */
+  #app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:236px; flex-shrink:0; background:var(--sidebar-bg); color:var(--sidebar-text);
+    display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; overflow-y:auto;
+  }
+  .sidebar-header{padding:22px 20px 14px; border-bottom:1px solid #303339;}
+  .sidebar-header .mark{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--brick); text-transform:uppercase;}
+  .sidebar-header h1{font-family:var(--display); font-weight:600; font-size:17px; margin:6px 0 2px; color:#F3F1EA; line-height:1.25;}
+  .sidebar-header .sub{font-size:11.5px; color:var(--sidebar-text-dim);}
+
+  .nav{list-style:none; margin:0; padding:10px; flex:1;}
+  .nav li{margin-bottom:2px;}
+  .nav a{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:6px;
+    text-decoration:none; color:var(--sidebar-text); font-size:13.5px; font-weight:500;
+    cursor:pointer; transition:background .12s ease;
+  }
+  .nav a:hover{background:var(--sidebar-active);}
+  .nav a.active{background:var(--brick); color:#fff;}
+  .nav a.disabled{color:var(--sidebar-text-dim); cursor:default;}
+  .nav a.disabled:hover{background:transparent;}
+  .nav svg{flex-shrink:0; width:17px; height:17px;}
+  .soon{margin-left:auto; font-family:var(--mono); font-size:9px; letter-spacing:.05em; color:var(--sidebar-text-dim); border:1px solid #3A3D44; padding:2px 5px; border-radius:4px;}
+
+  .sidebar-footer{padding:14px 20px; border-top:1px solid #303339; font-size:10.5px; color:var(--sidebar-text-dim); line-height:1.5;}
+
+  .main{margin-left:236px; flex:1; min-width:0; padding:28px 34px 60px;}
+  .topbar{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;}
+  .topbar h2{font-family:var(--display); font-weight:600; font-size:23px; margin:0 0 4px;}
+  .topbar .desc{color:var(--ink-soft); font-size:13px; max-width:560px;}
+  .topbar-actions{display:flex; gap:8px;}
+
+  .banner{
+    display:flex; align-items:center; gap:8px; background:var(--amber-light); color:var(--amber);
+    border:1px solid #E4CB9C; padding:9px 14px; border-radius:var(--radius); font-size:12.5px; margin-bottom:18px;
+  }
+  .banner svg{width:15px; height:15px; flex-shrink:0;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--body); font-size:13px; font-weight:500; padding:8px 14px; border-radius:6px;
+    border:1px solid var(--border-strong); background:var(--card); color:var(--ink); cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; transition:all .12s ease;
+  }
+  .btn:hover{border-color:var(--ink-faint); background:#FBFAF7;}
+  .btn-primary{background:var(--brick); border-color:var(--brick); color:#fff;}
+  .btn-primary:hover{background:var(--brick-dark); border-color:var(--brick-dark);}
+  .btn-ghost{border-color:transparent; background:transparent; padding:6px 8px;}
+  .btn-ghost:hover{background:var(--border); }
+  .btn-danger{color:#8C2A22;}
+  .btn svg{width:14px; height:14px;}
+  .btn-sm{padding:5px 9px; font-size:12px;}
+
+  /* ---------- table ---------- */
+  .table-wrap{background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden;}
+  table{width:100%; border-collapse:collapse;}
+  thead th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint);
+    font-weight:600; padding:11px 14px; border-bottom:1px solid var(--border); background:#FBFAF6; position:sticky; top:0;
+  }
+  thead th.num, td.num{text-align:right;}
+  tbody td{padding:9px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.row-item:hover{background:#FBFAF6;}
+  td.num, td.mono{font-family:var(--mono); font-size:12.5px;}
+  td.total{font-family:var(--mono); font-weight:500; color:var(--brick-dark);}
+  tr.group-start td{border-top:2px solid var(--border-strong);}
+
+  tr.row-header td{background:var(--steel-light); color:var(--steel); font-family:var(--display); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:8px 14px;}
+  tr.row-note td{background:#FBF8F0; font-style:italic; color:var(--ink-soft); font-size:12.5px; padding:10px 14px;}
+  tr.row-note .chip{font-style:normal;}
+
+  .chip{
+    display:inline-block; font-family:var(--mono); font-size:11px; font-weight:500; padding:2px 8px;
+    border-radius:20px; border:1px solid var(--border-strong); background:#FBFAF6; color:var(--ink-soft); white-space:nowrap;
+  }
+  .chip-out{background:var(--brick-light); border-color:#DBB4AC; color:var(--brick-dark);}
+
+  .actions-cell{display:flex; gap:4px; justify-content:flex-end;}
+
+  .empty-hint{padding:40px 20px; text-align:center; color:var(--ink-faint); font-size:13px;}
+
+  /* ---------- coming soon page ---------- */
+  .coming-soon{
+    background:var(--card); border:1px dashed var(--border-strong); border-radius:12px;
+    padding:60px 30px; text-align:center; color:var(--ink-soft);
+  }
+  .coming-soon svg{width:34px; height:34px; margin-bottom:12px; color:var(--ink-faint);}
+  .coming-soon h3{font-family:var(--display); font-weight:600; font-size:16px; color:var(--ink); margin:0 0 6px;}
+  .coming-soon p{font-size:13px; max-width:380px; margin:0 auto;}
+
+  /* ---------- modal ---------- */
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,18,15,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--card); border-radius:12px; width:100%; max-width:560px; max-height:88vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .modal-header{display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border);}
+  .modal-header h3{font-family:var(--display); font-size:15px; font-weight:600; margin:0;}
+  .modal-body{padding:18px 20px;}
+  .modal-footer{padding:14px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px;}
+
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:11.5px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;}
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    font-family:var(--body); font-size:13px; padding:8px 10px; border:1px solid var(--border-strong);
+    border-radius:6px; background:#FCFBF8; color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:56px; font-family:var(--body);}
+  .checkbox-row{display:flex; align-items:center; gap:8px; grid-column:1/-1;}
+  .checkbox-row label{font-size:12.5px; color:var(--ink-soft); font-weight:500; text-transform:none; letter-spacing:0;}
+
+  @media (max-width: 860px){
+    .sidebar{transform:translateX(-100%); transition:transform .18s ease; z-index:40;}
+    .sidebar.open{transform:translateX(0);}
+    .main{margin-left:0; padding:20px 16px 50px;}
+    .field-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="mark">Fixed Operations</div>
+      <h1>IHOC Service Manual</h1>
+      <div class="sub">Interstate Honda &middot; internal use only</div>
+    </div>
+    <ul class="nav" id="navList"></ul>
+    <div class="sidebar-footer">
+      Restricted to shop network.<br>IP allowlist not yet enforced.
+    </div>
+  </nav>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add row</h3>
+      <button class="btn btn-ghost" onclick="closeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRow()">Save row</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   CONFIG
+   ================================================================
+   Point this at your deployed Cloudflare Worker once it's live.
+   Until then (or whenever the Worker is unreachable) the app falls
+   back to the read/write-in-memory demo dataset below so the UI is
+   fully clickable without a backend.
+*/
+const CONFIG = {
+  API_BASE: 'https://ihoc-service-manual-api.whitakerm56.workers.dev/api'
+};
+
+/* ================================================================
+   PAGES
+   ================================================================ */
+const PAGES = [
+  { id:'pricing',   label:'Pricing Guide',            icon:'tag',      ready:true  },
+  { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:false },
+  { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:false },
+  { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:false },
+  { id:'phones',    label:'Phone Extensions',          icon:'phone',    ready:false },
+  { id:'process',   label:'Process Board',             icon:'flow',     ready:false },
+  { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:false },
+  { id:'schedule',  label:'Employee Schedule',         icon:'calendar', ready:false },
+];
+const SETTINGS_PAGE = { id:'settings', label:'Settings', icon:'gear' };
+
+const ICONS = {
+  tag: '<path d="M3 11 11 3h7v7l-8 8a1.5 1.5 0 0 1-2 0l-5-5a1.5 1.5 0 0 1 0-2Z"/><circle cx="15" cy="7" r="1.4"/>',
+  checklist: '<path d="M4 5h11M4 10h11M4 15h7"/><path d="M17.5 13.5 19 15l2.7-2.7"/>',
+  truck: '<rect x="2.5" y="7" width="10.5" height="7.5" rx=".8"/><path d="M13 9.5H17l3 3v2H13z"/><circle cx="7" cy="16.5" r="1.6"/><circle cx="17" cy="16.5" r="1.6"/>',
+  droplet: '<path d="M12 3.5S6 10.2 6 14.2a6 6 0 0 0 12 0C18 10.2 12 3.5 12 3.5Z"/>',
+  phone: '<path d="M5 4.5h3l1.4 3.6-1.9 1.6a11 11 0 0 0 5.8 5.8l1.6-1.9 3.6 1.4v3a1 1 0 0 1-1.1 1C10.7 18.6 5.4 13.3 4 5.6A1 1 0 0 1 5 4.5Z"/>',
+  flow: '<circle cx="5" cy="6" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M7 6h5a3 3 0 0 1 3 3v0M7 18h5a3 3 0 0 0 3-3v0"/>',
+  sitemap: '<rect x="9" y="3" width="6" height="4.2" rx=".7"/><rect x="2.5" y="16.8" width="6" height="4.2" rx=".7"/><rect x="9" y="16.8" width="6" height="4.2" rx=".7"/><rect x="15.5" y="16.8" width="6" height="4.2" rx=".7"/><path d="M12 7.2v4M5.5 16.8v-3h13v3"/>',
+  calendar: '<rect x="3" y="4.5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M7.5 3v3M16.5 3v3"/>',
+  gear: '<circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/>'
+};
+function icon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||''}</svg>`; }
+
+let currentPage = 'pricing';
+let usingDemoData = false;
+let pricingRows = [];
+let editingId = null;
+
+/* ================================================================
+   NAV
+   ================================================================ */
+function renderNav(){
+  const list = document.getElementById('navList');
+  list.innerHTML = '';
+  [...PAGES, {divider:true}, SETTINGS_PAGE].forEach(p => {
+    if(p.divider){
+      const li = document.createElement('li');
+      li.style.cssText = 'height:1px;background:#303339;margin:8px 10px;';
+      list.appendChild(li);
+      return;
+    }
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = (p.id === currentPage ? 'active ' : '') + (p.ready === false ? 'disabled' : '');
+    a.innerHTML = icon(p.icon) + `<span>${p.label}</span>` + (p.ready === false ? '<span class="soon">soon</span>' : '');
+    if(p.ready !== false){
+      a.onclick = () => goTo(p.id);
+    }
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+}
+
+function goTo(pageId){
+  currentPage = pageId;
+  renderNav();
+  render();
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ================================================================
+   DATA
+   ================================================================ */
+async function loadPricing(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/pricing`);
+    if(!res.ok) throw new Error('bad response');
+    pricingRows = await res.json();
+    usingDemoData = false;
+  }catch(err){
+    pricingRows = JSON.parse(JSON.stringify(SEED_DATA));
+    usingDemoData = true;
+  }
+  pricingRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+function fmtMoney(v){
+  if(v === null || v === undefined || v === '') return '';
+  return '$' + Number(v).toFixed(2);
+}
+function fmtHours(v){
+  if(v === null || v === undefined || v === '') return '';
+  return Number(v).toFixed(1);
+}
+
+/* ================================================================
+   RENDER: PRICING GUIDE + SETTINGS share a table renderer
+   ================================================================ */
+function pricingTableHTML(editable){
+  let prevMm = null;
+  const rowsHtml = pricingRows.map(r => {
+    if(r.row_type === 'header'){
+      prevMm = null;
+      return `<tr class="row-header"><td colspan="${editable?8:7}">${escapeHtml(r.description)}</td></tr>`;
+    }
+    if(r.row_type === 'note'){
+      prevMm = null;
+      const chip = r.mm_code ? `<span class="chip">${escapeHtml(r.mm_code)}</span> ` : '';
+      const editCell = editable ? `<td class="actions-cell">${actionButtons(r.id)}</td>` : '';
+      return `<tr class="row-note"><td colspan="${editable?7:7}">${chip}${escapeHtml(r.description)}</td>${editCell}</tr>`;
+    }
+    const groupStart = r.mm_code && r.mm_code !== prevMm;
+    if(r.mm_code) prevMm = r.mm_code;
+    const mm = r.mm_code ? `<span class="chip">${escapeHtml(r.mm_code)}</span>` : '';
+    const parts = r.price_out ? `<span class="chip chip-out">Price out</span>` : fmtMoney(r.total_parts);
+    const editCell = editable ? `<td class="actions-cell">${actionButtons(r.id)}</td>` : '';
+    return `<tr class="row-item${groupStart?' group-start':''}">
+      <td class="mono">${mm}</td>
+      <td>${escapeHtml(r.description)}${r.timing_type ? ` <span class="chip">${escapeHtml(r.timing_type)}</span>`:''}</td>
+      <td class="num">${fmtHours(r.labor_hours)}</td>
+      <td class="num">${fmtMoney(r.labor_price)}</td>
+      <td class="num">${fmtMoney(r.labor_rate)}</td>
+      <td class="num">${parts}</td>
+      <td class="num total">${fmtMoney(r.total_price)}</td>
+      ${editCell}
+    </tr>`;
+  }).join('');
+
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>MM code</th><th>Description</th><th class="num">Labor hrs</th><th class="num">Labor $</th>
+      <th class="num">Rate</th><th class="num">Parts</th><th class="num">Total</th>
+      ${editable?'<th class="num">Actions</th>':''}
+    </tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="8" class="empty-hint">No rows yet. Add the first one.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function actionButtons(id){
+  return `<button class="btn btn-ghost btn-sm" onclick="openEdit('${id}')" aria-label="Edit">${icon('gear').replace('gear','')}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M4 20l1-4 11-11 3 3-11 11-4 1Z"/></svg></button>
+  <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteRow('${id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
+}
+
+function demoBanner(){
+  if(!usingDemoData) return '';
+  return `<div class="banner">${icon('gear').replace(/<[^>]+gear[^>]*>/,'')}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+    Demo mode — the Worker at <code style="font-family:var(--mono)">${CONFIG.API_BASE}</code> isn't reachable, so this is showing the original spreadsheet data in memory. Edits here won't be saved until the Worker + Supabase are connected.</div>`;
+}
+
+/* ================================================================
+   PAGE: Pricing Guide
+   ================================================================ */
+function renderPricingPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Pricing guide</h2>
+        <div class="desc">Labor, parts, and total pricing for every standard service operation.</div>
+      </div>
+    </div>
+    ${demoBanner()}
+    ${pricingTableHTML(false)}
+  `;
+}
+
+/* ================================================================
+   PAGE: Settings (pricing guide CRUD, page 1)
+   ================================================================ */
+function renderSettingsPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries. Currently managing the Pricing Guide — the same pattern will extend to every other page as it's built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openAdd()">${icon('tag').replace('tag','').replace('<circle','')}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add row</button>
+      </div>
+    </div>
+    ${demoBanner()}
+    ${pricingTableHTML(true)}
+  `;
+}
+
+/* ================================================================
+   PAGE: Coming soon
+   ================================================================ */
+function renderComingSoon(page){
+  return `
+    <div class="topbar"><div><h2>${page.label}</h2></div></div>
+    <div class="coming-soon">
+      ${icon(page.icon)}
+      <h3>Not built yet</h3>
+      <p>${page.label} is next up in the build queue. It'll appear here — and in the sidebar as a live link — once its table and Worker routes are ready.</p>
+    </div>
+  `;
+}
+
+/* ================================================================
+   MAIN RENDER
+   ================================================================ */
+async function render(){
+  const main = document.getElementById('main');
+  if(currentPage === 'pricing'){
+    if(pricingRows.length === 0) await loadPricing();
+    main.innerHTML = renderPricingPage();
+  } else if(currentPage === 'settings'){
+    if(pricingRows.length === 0) await loadPricing();
+    main.innerHTML = renderSettingsPage();
+  } else {
+    const page = PAGES.find(p => p.id === currentPage);
+    main.innerHTML = renderComingSoon(page);
+  }
+}
+
+/* ================================================================
+   MODAL / CRUD
+   ================================================================ */
+function emptyRow(){
+  return { row_type:'item', timing_type:'', mm_code:'', description:'', labor_hours:'', labor_price:'', labor_rate:'', total_parts:'', price_out:false, total_price:'' };
+}
+
+function openAdd(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Add row';
+  document.getElementById('modalBody').innerHTML = modalFormHTML(emptyRow());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEdit(id){
+  const row = pricingRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit row';
+  document.getElementById('modalBody').innerHTML = modalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+  toggleFieldVisibility();
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function modalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field">
+        <label>Row type</label>
+        <select id="f_row_type" onchange="toggleFieldVisibility()">
+          <option value="item" ${r.row_type==='item'?'selected':''}>Item (priced row)</option>
+          <option value="header" ${r.row_type==='header'?'selected':''}>Section header</option>
+          <option value="note" ${r.row_type==='note'?'selected':''}>Note (policy text)</option>
+        </select>
+      </div>
+      <div class="field" id="wrap_mm_code">
+        <label>MM code / label</label>
+        <input type="text" id="f_mm_code" value="${escapeAttr(r.mm_code)}" placeholder="e.g. A1 or B1, WIPERS">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full" id="wrap_description">
+        <label>Description</label>
+        <textarea id="f_description" placeholder="Operation description, header text, or note">${escapeHtml(r.description||'')}</textarea>
+      </div>
+    </div>
+    <div class="field-row" id="wrap_item_fields">
+      <div class="field">
+        <label>Timing type</label>
+        <input type="text" id="f_timing_type" value="${escapeAttr(r.timing_type)}" placeholder="Chain / Belt (optional)">
+      </div>
+      <div class="field">
+        <label>Labor hours</label>
+        <input type="number" step="0.1" id="f_labor_hours" value="${r.labor_hours ?? ''}">
+      </div>
+      <div class="field">
+        <label>Labor price</label>
+        <input type="number" step="0.01" id="f_labor_price" value="${r.labor_price ?? ''}">
+      </div>
+      <div class="field">
+        <label>Labor rate</label>
+        <input type="number" step="0.01" id="f_labor_rate" value="${r.labor_rate ?? ''}">
+      </div>
+      <div class="field">
+        <label>Total parts</label>
+        <input type="number" step="0.01" id="f_total_parts" value="${r.total_parts ?? ''}">
+      </div>
+      <div class="field">
+        <label>Total price</label>
+        <input type="number" step="0.01" id="f_total_price" value="${r.total_price ?? ''}">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="f_price_out" ${r.price_out ? 'checked':''}>
+        <label for="f_price_out">Price out (no fixed parts total — quoted at time of service)</label>
+      </div>
+    </div>
+  `;
+}
+
+function toggleFieldVisibility(){
+  const type = document.getElementById('f_row_type').value;
+  document.getElementById('wrap_item_fields').style.display = type === 'item' ? 'grid' : 'none';
+  document.getElementById('wrap_mm_code').style.display = type === 'header' ? 'none' : 'flex';
+}
+
+async function saveRow(){
+  const row_type = document.getElementById('f_row_type').value;
+  const payload = {
+    row_type,
+    mm_code: type_or_null(document.getElementById('f_mm_code').value),
+    description: document.getElementById('f_description').value.trim(),
+  };
+  if(row_type === 'item'){
+    payload.timing_type = type_or_null(document.getElementById('f_timing_type').value);
+    payload.labor_hours = numOrNull(document.getElementById('f_labor_hours').value);
+    payload.labor_price = numOrNull(document.getElementById('f_labor_price').value);
+    payload.labor_rate = numOrNull(document.getElementById('f_labor_rate').value);
+    payload.total_parts = numOrNull(document.getElementById('f_total_parts').value);
+    payload.price_out = document.getElementById('f_price_out').checked;
+    payload.total_price = numOrNull(document.getElementById('f_total_price').value);
+  }
+  if(!payload.description){
+    alert('Description is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(pricingRows.find(r => r.id === editingId), payload);
+    if(!usingDemoData){
+      try{ await fetch(`${CONFIG.API_BASE}/pricing/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (pricingRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    pricingRows.push(newRow);
+    if(!usingDemoData){
+      try{ await fetch(`${CONFIG.API_BASE}/pricing`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteRow(id){
+  if(!confirm('Delete this row? This can\'t be undone.')) return;
+  pricingRows = pricingRows.filter(r => r.id !== id);
+  if(!usingDemoData){
+    try{ await fetch(`${CONFIG.API_BASE}/pricing/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
+function type_or_null(v){ v = (v||'').trim(); return v === '' ? null : v; }
+function numOrNull(v){ return v === '' || v === null || v === undefined ? null : Number(v); }
+function escapeHtml(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ================================================================
+   INIT
+   ================================================================ */
+const SEED_DATA = [{"id": "seed-10","sort_order": 10,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 0W20 4CYL","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-20","sort_order": 20,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 0W20 6CYL","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 87.5},{"id": "seed-30","sort_order": 30,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION 5W20","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-40","sort_order": 40,"row_type": "item","timing_type": null,"mm_code": "A1 or B1","description": "OIL CHANGE/TIRE ROTATION - 5W30","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": 45,"price_out": false,"total_price": 82.5},{"id": "seed-50","sort_order": 50,"row_type": "item","timing_type": null,"mm_code": "1","description": "TIRE ROTATION","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 15},{"id": "seed-60","sort_order": 60,"row_type": "item","timing_type": null,"mm_code": "2","description": "AIR & CABIN AIR FILTER","labor_hours": 0.4,"labor_price": 30,"labor_rate": 75,"total_parts": 63,"price_out": false,"total_price": 93},{"id": "seed-70","sort_order": 70,"row_type": "item","timing_type": null,"mm_code": null,"description": "ENGINE AIR FILTER","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": 35,"price_out": false,"total_price": 50},{"id": "seed-80","sort_order": 80,"row_type": "item","timing_type": null,"mm_code": null,"description": "CABIN AIR FILTER","labor_hours": 0.2,"labor_price": 15,"labor_rate": 75,"total_parts": 28,"price_out": false,"total_price": 43},{"id": "seed-90","sort_order": 90,"row_type": "item","timing_type": null,"mm_code": "3","description": "MANUAL TRANS SERVICE","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 20,"price_out": false,"total_price": 107.5},{"id": "seed-100","sort_order": 100,"row_type": "item","timing_type": null,"mm_code": "3","description": "ATF-DW1 TRANS SERV. 2WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 50,"price_out": false,"total_price": 137.5},{"id": "seed-110","sort_order": 110,"row_type": "item","timing_type": null,"mm_code": "3","description": "ATF-DW1 TRANS SERV. 4WD","labor_hours": 1,"labor_price": 125,"labor_rate": 125,"total_parts": 50,"price_out": false,"total_price": 175},{"id": "seed-120","sort_order": 120,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT TRANS SERV. OLDER HYBRIDS","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 40,"price_out": false,"total_price": 127.5},{"id": "seed-130","sort_order": 130,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT HCF2 TRANS SERV. 2WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 70,"price_out": false,"total_price": 157.5},{"id": "seed-140","sort_order": 140,"row_type": "item","timing_type": null,"mm_code": "3","description": "CVT HCF2 TRANS SERV. 4WD","labor_hours": 0.7,"labor_price": 87.5,"labor_rate": 125,"total_parts": 120,"price_out": false,"total_price": 207.5},{"id": "seed-150","sort_order": 150,"row_type": "item","timing_type": null,"mm_code": "3","description": "10 SPEED TRANS SERV.","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 140,"price_out": false,"total_price": 327.5},{"id": "seed-160","sort_order": 160,"row_type": "item","timing_type": null,"mm_code": "3","description": "9 SPEED TRANSMISSION SERV. 2WD","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 250,"price_out": false,"total_price": 437.5},{"id": "seed-170","sort_order": 170,"row_type": "item","timing_type": null,"mm_code": "3","description": "9 SPEED TRANSMISSION SERV,4WD","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 250,"price_out": false,"total_price": 437.5},{"id": "seed-180","sort_order": 180,"row_type": "header","description": "Timing Type"},{"id": "seed-190","sort_order": 190,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 07-08 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 196.15,"price_out": false,"total_price": 756.15},{"id": "seed-200","sort_order": 200,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 09-13 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 194.81,"price_out": false,"total_price": 754.81},{"id": "seed-210","sort_order": 210,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "FIT 15-20 1.5L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 248.41,"price_out": false,"total_price": 808.41},{"id": "seed-220","sort_order": 220,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CR-Z 11-16 1.5L","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 270.32,"price_out": false,"total_price": 760.32},{"id": "seed-230","sort_order": 230,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 00-06 1.5L","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 366.06,"price_out": false,"total_price": 856.06},{"id": "seed-240","sort_order": 240,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 10-11 1.5L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 297.94,"price_out": false,"total_price": 927.94},{"id": "seed-250","sort_order": 250,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "INSIGHT 12-14 1.3L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 423.78,"price_out": false,"total_price": 1053.78},{"id": "seed-260","sort_order": 260,"row_type": "item","timing_type": null,"mm_code": "4","description": "INSIGHT 19-21 1.5L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 182.62,"price_out": false,"total_price": 602.62},{"id": "seed-270","sort_order": 270,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 03-05 1.3L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 262.8,"price_out": false,"total_price": 682.8},{"id": "seed-280","sort_order": 280,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 06-11 1.3L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 278.4,"price_out": false,"total_price": 698.4},{"id": "seed-290","sort_order": 290,"row_type": "item","timing_type": "Chain","mm_code": "4","description": "CIVIC HYBRID 12-15 1.5L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 430.13,"price_out": false,"total_price": 780.13},{"id": "seed-300","sort_order": 300,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC/CRX/DEL S 80-95 1.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 322.27,"price_out": false,"total_price": 1232.27},{"id": "seed-310","sort_order": 310,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 90-00 1.6L ","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 297.57,"price_out": false,"total_price": 1137.57},{"id": "seed-320","sort_order": 320,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 01-05 1.7L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 364.1,"price_out": false,"total_price": 1204.1},{"id": "seed-330","sort_order": 330,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC 06-11 1.8L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 193,"price_out": false,"total_price": 613},{"id": "seed-340","sort_order": 340,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 12-15 1.8L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 178.08,"price_out": false,"total_price": 528.08},{"id": "seed-350","sort_order": 350,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 16-21 2.0L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 162.82,"price_out": false,"total_price": 722.82},{"id": "seed-360","sort_order": 360,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC 16-23 1.5T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 207.24,"price_out": false,"total_price": 627.24},{"id": "seed-370","sort_order": 370,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CIVIC SI 02-05 2.0L","labor_hours": 8,"labor_price": 1120,"labor_rate": 140,"total_parts": 482.58,"price_out": false,"total_price": 1602.58},{"id": "seed-380","sort_order": 380,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI 06-11 2.0L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 151.5,"price_out": false,"total_price": 711.5},{"id": "seed-390","sort_order": 390,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI 12-15 2.4L","labor_hours": 4,"labor_price": 560,"labor_rate": 140,"total_parts": 182.41,"price_out": false,"total_price": 742.41},{"id": "seed-400","sort_order": 400,"row_type": "item","timing_type": null,"mm_code": "4","description": "CIVIC SI TURBO 16-20 2.4T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 219.1,"price_out": false,"total_price": 639.1},{"id": "seed-410","sort_order": 410,"row_type": "item","timing_type": null,"mm_code": "4","description": "S2000 00-09 2.0L-2.2L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 517.99,"price_out": false,"total_price": 1147.99},{"id": "seed-420","sort_order": 420,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID V6 05-07 3.0L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 751.17,"price_out": false,"total_price": 1661.17},{"id": "seed-430","sort_order": 430,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID 14-17 2.0L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 187.09,"price_out": false,"total_price": 537.09},{"id": "seed-440","sort_order": 440,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD HYBRID 18-21 2.0L ","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 274.7,"price_out": false,"total_price": 624.7},{"id": "seed-450","sort_order": 450,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 90-97/ PRELUDE 92-01 2.2L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 490.94,"price_out": false,"total_price": 1400.94},{"id": "seed-460","sort_order": 460,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 98-02 / PRELUDE 92-96 2.3L","labor_hours": 7,"labor_price": 980,"labor_rate": 140,"total_parts": 583.16,"price_out": false,"total_price": 1563.16},{"id": "seed-470","sort_order": 470,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "ACCORD 03-07 2.4L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 193.58,"price_out": false,"total_price": 543.58},{"id": "seed-480","sort_order": 480,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 08-12 2.4L","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 257.96,"price_out": false,"total_price": 607.96},{"id": "seed-490","sort_order": 490,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 13-17 2.4L ","labor_hours": 2.5,"labor_price": 350,"labor_rate": 140,"total_parts": 167.78,"price_out": false,"total_price": 517.78},{"id": "seed-500","sort_order": 500,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 18-21 1.5T","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 248.94,"price_out": false,"total_price": 668.94},{"id": "seed-510","sort_order": 510,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 95-97 2.7L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 372.74,"price_out": false,"total_price": 1212.74},{"id": "seed-520","sort_order": 520,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 98-02 3.0L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 755.71,"price_out": false,"total_price": 1595.71},{"id": "seed-530","sort_order": 530,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 03-05 3.0L","labor_hours": 6,"labor_price": 840,"labor_rate": 140,"total_parts": 759.3,"price_out": false,"total_price": 1599.3},{"id": "seed-540","sort_order": 540,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 06-07 3.0L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 759.3,"price_out": false,"total_price": 1669.3},{"id": "seed-550","sort_order": 550,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD 08-17 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 887.35,"price_out": false,"total_price": 1797.35},{"id": "seed-560","sort_order": 560,"row_type": "item","timing_type": null,"mm_code": "4","description": "ACCORD TURBO 18-21 2.0T","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 248.94,"price_out": false,"total_price": 878.94},{"id": "seed-570","sort_order": 570,"row_type": "item","timing_type": null,"mm_code": "4","description": "CROSSTOUR 12-15 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 180.05,"price_out": false,"total_price": 600.05},{"id": "seed-580","sort_order": 580,"row_type": "item","timing_type": null,"mm_code": "4","description": "CROSSTOUR 10-15 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 796.03,"price_out": false,"total_price": 1706.03},{"id": "seed-590","sort_order": 590,"row_type": "item","timing_type": null,"mm_code": "4","description": "HR-V 16-21 1.8L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 183.27,"price_out": false,"total_price": 603.27},{"id": "seed-600","sort_order": 600,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 97-01 2.0L","labor_hours": 5,"labor_price": 700,"labor_rate": 140,"total_parts": 604.06,"price_out": false,"total_price": 1304.06},{"id": "seed-610","sort_order": 610,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 02-06 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 234.98,"price_out": false,"total_price": 654.98},{"id": "seed-620","sort_order": 620,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "CR-V 07-09 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 225.06,"price_out": false,"total_price": 645.06},{"id": "seed-630","sort_order": 630,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 10-11 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 209.64,"price_out": false,"total_price": 629.64},{"id": "seed-640","sort_order": 640,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 12-14 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 169.23,"price_out": false,"total_price": 799.23},{"id": "seed-650","sort_order": 650,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 15-16 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 166.75,"price_out": false,"total_price": 796.75},{"id": "seed-660","sort_order": 660,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 17-19 2.4L","labor_hours": 4.5,"labor_price": 630,"labor_rate": 140,"total_parts": 167.78,"price_out": false,"total_price": 797.78},{"id": "seed-670","sort_order": 670,"row_type": "item","timing_type": null,"mm_code": "4","description": "CR-V 17-21 1.5T ","labor_hours": 3.5,"labor_price": 490,"labor_rate": 140,"total_parts": 223.76,"price_out": false,"total_price": 713.76},{"id": "seed-680","sort_order": 680,"row_type": "item","timing_type": "Belt","mm_code": "4","description": "ELEMENT 03-11 2.4L","labor_hours": 3,"labor_price": 420,"labor_rate": 140,"total_parts": 193.98,"price_out": false,"total_price": 613.98},{"id": "seed-690","sort_order": 690,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 03-04 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 749.78,"price_out": false,"total_price": 1659.78},{"id": "seed-700","sort_order": 700,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 05-08 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 778.2,"price_out": false,"total_price": 1688.2},{"id": "seed-710","sort_order": 710,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 09-11 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-720","sort_order": 720,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT 12-15 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 794.7,"price_out": false,"total_price": 1704.7},{"id": "seed-730","sort_order": 730,"row_type": "item","timing_type": null,"mm_code": "4","description": "PILOT-PASSPORT 16-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-740","sort_order": 740,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 06-08 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 778.2,"price_out": false,"total_price": 1688.2},{"id": "seed-750","sort_order": 750,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 09-14 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-760","sort_order": 760,"row_type": "item","timing_type": null,"mm_code": "4","description": "RIDGELINE 17-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-770","sort_order": 770,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 95-97 2.2L","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 382.84,"price_out": false,"total_price": 1152.84},{"id": "seed-780","sort_order": 780,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 98 2.3L ","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 369.7,"price_out": false,"total_price": 1139.7},{"id": "seed-790","sort_order": 790,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 99-04 3.5L","labor_hours": 5.5,"labor_price": 770,"labor_rate": 140,"total_parts": 612.53,"price_out": false,"total_price": 1382.53},{"id": "seed-800","sort_order": 800,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 05-10 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 802.08,"price_out": false,"total_price": 1712.08},{"id": "seed-810","sort_order": 810,"row_type": "item","timing_type": "BELT","mm_code": "4","description": "ODYSSEY 11-17 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 794.7,"price_out": false,"total_price": 1704.7},{"id": "seed-820","sort_order": 820,"row_type": "item","timing_type": null,"mm_code": "4","description": "ODYSSEY 18-21 3.5L","labor_hours": 6.5,"labor_price": 910,"labor_rate": 140,"total_parts": 931.97,"price_out": false,"total_price": 1841.97},{"id": "seed-830","sort_order": 830,"row_type": "item","timing_type": null,"mm_code": "5","description": "COOLANT FLUID EXHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 25,"price_out": false,"total_price": 125},{"id": "seed-840","sort_order": 840,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. DPSF2","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 27.28,"price_out": false,"total_price": 127.28},{"id": "seed-850","sort_order": 850,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. VTM4","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 39,"price_out": false,"total_price": 139},{"id": "seed-860","sort_order": 860,"row_type": "item","timing_type": null,"mm_code": "6","description": "DIFFERENTIAL SERV. S2000","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 12.1,"price_out": false,"total_price": 112.1},{"id": "seed-870","sort_order": 870,"row_type": "item","timing_type": null,"mm_code": "7","description": "BRAKE FLUID EXCHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 14,"price_out": false,"total_price": 114},{"id": "seed-880","sort_order": 880,"row_type": "item","timing_type": null,"mm_code": null,"description": "POWER STEERING FLUID EXCHANGE","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 15,"price_out": false,"total_price": 115},{"id": "seed-890","sort_order": 890,"row_type": "item","timing_type": null,"mm_code": null,"description": "CLUTCH FLUID EXCHANGE (MANUAL TRANS ONLY)","labor_hours": 0.8,"labor_price": 100,"labor_rate": 125,"total_parts": 13.26,"price_out": false,"total_price": 113.26},{"id": "seed-900","sort_order": 900,"row_type": "item","timing_type": null,"mm_code": "WIPERS","description": "WIPER INSERTS (PAIR)","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 15,"price_out": false,"total_price": 22.5},{"id": "seed-910","sort_order": 910,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR WIPER INSERT","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 7.5,"price_out": false,"total_price": 15},{"id": "seed-920","sort_order": 920,"row_type": "item","timing_type": null,"mm_code": null,"description": "WIPER BLADES (PAIR)","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 57.5},{"id": "seed-930","sort_order": 930,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR WIPER BLADE","labor_hours": 0.1,"labor_price": 7.5,"labor_rate": 75,"total_parts": 25,"price_out": false,"total_price": 32.5},{"id": "seed-940","sort_order": 940,"row_type": "item","timing_type": null,"mm_code": "BULBS","description": "STANDARD HEADLIGHT BULB","labor_hours": 0.1,"labor_price": 5,"labor_rate": 50,"total_parts": 18,"price_out": false,"total_price": 23},{"id": "seed-950","sort_order": 950,"row_type": "item","timing_type": null,"mm_code": "BATTERIES","description": "151R    31500-SNC-00100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 140.64,"price_out": false,"total_price": 163.14},{"id": "seed-960","sort_order": 960,"row_type": "item","timing_type": null,"mm_code": null,"description": "24F      31500-TK8-A2100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 155.39,"price_out": false,"total_price": 177.89},{"id": "seed-970","sort_order": 970,"row_type": "item","timing_type": null,"mm_code": null,"description": "35             31500-SL5-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 145.05,"price_out": false,"total_price": 167.55},{"id": "seed-980","sort_order": 980,"row_type": "item","timing_type": null,"mm_code": null,"description": "51            31500-SB2-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 148.93,"price_out": false,"total_price": 171.43},{"id": "seed-990","sort_order": 990,"row_type": "item","timing_type": null,"mm_code": null,"description": "51R          31500-SR1-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 146.37,"price_out": false,"total_price": 168.87},{"id": "seed-1000","sort_order": 1000,"row_type": "item","timing_type": null,"mm_code": null,"description": "H5     31500-TLA-EFB100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 298.78,"price_out": false,"total_price": 321.28},{"id": "seed-1010","sort_order": 1010,"row_type": "item","timing_type": null,"mm_code": null,"description": "H5           31500-TGG-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 202.17,"price_out": false,"total_price": 224.67},{"id": "seed-1020","sort_order": 1020,"row_type": "item","timing_type": null,"mm_code": null,"description": "H6            31500-TZ3-100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 202.32,"price_out": false,"total_price": 224.82},{"id": "seed-1030","sort_order": 1030,"row_type": "item","timing_type": null,"mm_code": null,"description": "H6    31500-TZ7-AGM100M","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 272.4,"price_out": false,"total_price": 294.9},{"id": "seed-1040","sort_order": 1040,"row_type": "item","timing_type": null,"mm_code": null,"description": "BATTERY SERVICE (CLEANING & PROTECTANT)","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": 5,"price_out": false,"total_price": 27.5},{"id": "seed-1050","sort_order": 1050,"row_type": "item","timing_type": null,"mm_code": "TIRES","description": "MOUNT & BALANCE 1 ","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1060","sort_order": 1060,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 2","labor_hours": 0.6,"labor_price": 45,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1070","sort_order": 1070,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 3 ","labor_hours": 0.9,"labor_price": 67.5,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1080","sort_order": 1080,"row_type": "item","timing_type": null,"mm_code": null,"description": "MOUNT & BALANCE 4","labor_hours": 1.2,"labor_price": 90,"labor_rate": 75,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1090","sort_order": 1090,"row_type": "item","timing_type": null,"mm_code": null,"description": "ALIGNMENT","labor_hours": 1.2,"labor_price": 120,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 120},{"id": "seed-1100","sort_order": 1100,"row_type": "item","timing_type": null,"mm_code": null,"description": "ROAD FORCE BALANCE TIRES","labor_hours": 0.5,"labor_price": 37.5,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 37.5},{"id": "seed-1110","sort_order": 1110,"row_type": "item","timing_type": null,"mm_code": null,"description": "1 TIRE REPAIR + BALANCE","labor_hours": 0.3,"labor_price": 22.5,"labor_rate": 75,"total_parts": null,"price_out": false,"total_price": 22.5},{"id": "seed-1120","sort_order": 1120,"row_type": "item","timing_type": null,"mm_code": null,"description": "1 TIRE PRESSURE SENSOR + BALANCE","labor_hours": 0.6,"labor_price": 45,"labor_rate": 75,"total_parts": 50,"price_out": false,"total_price": 95},{"id": "seed-1130","sort_order": 1130,"row_type": "item","timing_type": null,"mm_code": null,"description": "DIAGNOSTIC - TPMS SYSTEM","labor_hours": 0.5,"labor_price": 50,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 50},{"id": "seed-1140","sort_order": 1140,"row_type": "item","timing_type": null,"mm_code": "BRAKES","description": "FRONT BRAKE PADS - MACHINE ROTORS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 65,"price_out": false,"total_price": 315},{"id": "seed-1150","sort_order": 1150,"row_type": "item","timing_type": null,"mm_code": null,"description": "FRONT BRAKE PADS - REPLACE ROTORS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 116,"price_out": false,"total_price": 303.5},{"id": "seed-1160","sort_order": 1160,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE PADS - MACHINE ROTORS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 65,"price_out": false,"total_price": 315},{"id": "seed-1170","sort_order": 1170,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE PADS - REPLACE ROTORS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 92,"price_out": false,"total_price": 279.5},{"id": "seed-1180","sort_order": 1180,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE DRUMS - MACHINE DRUMS","labor_hours": 2,"labor_price": 250,"labor_rate": 125,"total_parts": 85,"price_out": false,"total_price": 335},{"id": "seed-1190","sort_order": 1190,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKE DRUMS - REPLACE DRUMS","labor_hours": 1.5,"labor_price": 187.5,"labor_rate": 125,"total_parts": 316,"price_out": false,"total_price": 503.5},{"id": "seed-1200","sort_order": 1200,"row_type": "item","timing_type": null,"mm_code": null,"description": "REAR BRAKES DRUMS - CLEAN & ADJUST","labor_hours": 0.5,"labor_price": 62.5,"labor_rate": 125,"total_parts": null,"price_out": false,"total_price": 62.5},{"id": "seed-1210","sort_order": 1210,"row_type": "item","timing_type": null,"mm_code": null,"description": "HONDA SERVICE PASS (B1)","labor_hours": 0.6,"labor_price": null,"labor_rate": 0,"total_parts": null,"price_out": false,"total_price": 0},{"id": "seed-1220","sort_order": 1220,"row_type": "item","timing_type": null,"mm_code": "DIAGNOSTICS","description": "DIAGNOSTIC - CHECK ENGINE","labor_hours": 1,"labor_price": 100,"labor_rate": 100,"total_parts": null,"price_out": false,"total_price": 100},{"id": "seed-1230","sort_order": 1230,"row_type": "item","timing_type": null,"mm_code": null,"description": "DIAGNOSTIC - A/C SYSTEM","labor_hours": 1.5,"labor_price": 150,"labor_rate": 100,"total_parts": 100,"price_out": false,"total_price": 250},{"id": "seed-1240","sort_order": 1240,"row_type": "item","timing_type": null,"mm_code": "KEYS","description": "PROGRAMMING KEYS OR FOBS","labor_hours": 0.5,"labor_price": 75,"labor_rate": 150,"total_parts": null,"price_out": true,"total_price": null},{"id": "seed-1250","sort_order": 1250,"row_type": "item","timing_type": null,"mm_code": "WARRANTY","description": "AMERICAN HONDA WARRANTY","labor_hours": null,"labor_price": null,"labor_rate": 115,"total_parts": null,"price_out": false,"total_price": 0},{"id": "seed-1260","sort_order": 1260,"row_type": "item","timing_type": null,"mm_code": "INTERNAL","description": "PDI (NEW CAR PRE-DELIVERY INSPECTION)","labor_hours": 1.4,"labor_price": 161,"labor_rate": 115,"total_parts": null,"price_out": false,"total_price": 161},{"id": "seed-1270","sort_order": 1270,"row_type": "item","timing_type": null,"mm_code": null,"description": "UCI (USED VEHICLE INSPECTION)","labor_hours": 1.5,"labor_price": 240,"labor_rate": 160,"total_parts": null,"price_out": false,"total_price": 240},{"id": "seed-1280","sort_order": 1280,"row_type": "item","timing_type": null,"mm_code": null,"description": "HONDA CERTIFIED UCI (USED VEHICLE INSPECTION)","labor_hours": 2,"labor_price": 320,"labor_rate": 160,"total_parts": null,"price_out": false,"total_price": 320},{"id": "seed-1290","sort_order": 1290,"row_type": "note","mm_code": "SHOP SUPPLIES","description": "8% of total Parts + Labor per RO. Minimum of $3.00 per RO, maximum of $25.00 per RO"},{"id": "seed-1300","sort_order": 1300,"row_type": "note","mm_code": "EMPLOYEE PRICING","description": "$60.00 Hourly Labor Rate, 10% over cost for Parts, 10% over cost Sublet(Idens, etc.), No Shop Supplies Fee."},{"id": "seed-1310","sort_order": 1310,"row_type": "note","mm_code": null,"description": "ONLY technicians performing their own labor get to waive labor charges."},{"id": "seed-1320","sort_order": 1320,"row_type": "note","mm_code": null,"description": "Employee rates apply to employees & their direct family members(parents, siblings, children, & their companions. Excludes cousins)"}];
+
+renderNav();
+render();
+</script>
+</body>
+</html>
