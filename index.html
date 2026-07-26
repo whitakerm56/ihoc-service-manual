@@ -293,6 +293,27 @@
   .vendor-meta-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft);}
   .vendor-meta-item svg{width:14px; height:14px; color:var(--steel); flex-shrink:0;}
 
+  /* ---------- extended warranty companies ---------- */
+  .warranty-card{margin-bottom:18px;}
+  .warranty-link{color:var(--steel); text-decoration:none; font-weight:500;}
+  .warranty-link:hover{text-decoration:underline;}
+  .warranty-body{padding:16px;}
+  .warranty-cred-row{display:flex; gap:24px; flex-wrap:wrap; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);}
+  .warranty-cred{min-width:180px;}
+  .warranty-cred-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); font-weight:600; margin-bottom:4px;}
+  .warranty-cred-value{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:13px; color:var(--ink);}
+  .warranty-cred-value .btn{padding:3px 8px; font-size:11px;}
+  .warranty-password-mask{letter-spacing:1px;}
+  .warranty-rate-row{display:flex; gap:16px; flex-wrap:wrap;}
+  .warranty-rate-block{background:#17181A; border:1px solid var(--border); border-radius:8px; padding:10px 14px; min-width:150px;}
+  .warranty-rate-suggested{background:var(--brick-light); border-color:#2E5A96;}
+  .warranty-rate-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); font-weight:600;}
+  .warranty-rate-value{font-family:var(--display); font-weight:700; font-size:18px; color:var(--ink); margin-top:2px;}
+  .warranty-rate-suggested .warranty-rate-value{color:var(--brick-dark);}
+  .warranty-rate-date{font-size:10.5px; color:var(--ink-faint); margin-top:2px;}
+  .warranty-rate-note{font-size:10px; color:var(--brick-dark); margin-top:4px; line-height:1.35; max-width:180px;}
+  .warranty-notes{margin-top:14px; font-size:12px; color:var(--ink-soft); font-style:italic;}
+
   /* ---------- settings tabs ---------- */
   .settings-tabs{display:flex; gap:4px; margin-bottom:18px; border-bottom:1px solid var(--border);}
   .settings-tab{
@@ -445,6 +466,7 @@ let usingDemoData = false;
 let usingDemoDataLaborRates = false;
 let usingDemoDataMM = false;
 let usingDemoDataVendors = false;
+let usingDemoDataWarranty = false;
 let usingDemoDataOilGuide = false;
 let usingDemoDataOtherFluids = false;
 let usingDemoDataFluidParts = false;
@@ -460,6 +482,7 @@ let pricingRows = [];
 let laborRateRows = [];
 let mmRows = [];
 let vendorRows = [];
+let warrantyCompanyRows = [];
 let engineOilRows = [];
 let otherFluidsRows = [];
 let fluidPartsRows = [];
@@ -479,6 +502,7 @@ let editingVendorId = null;
 let editingSubprocessId = null;
 let settingsTab = 'pricing';
 let pricingSettingsSubTab = 'pricing';
+let vendorSettingsSubTab = 'vendors';
 let oilSettingsSubTab = 'engine';
 let orgSettingsSubTab = 'roster';
 let processSettingsSubTab = 'lifecycle';
@@ -575,6 +599,19 @@ async function loadVendors(){
   }
   vendorRows.sort((a,b) => a.sort_order - b.sort_order);
   vendorRows.forEach(v => (v.vendor_services || []).sort((a,b) => a.sort_order - b.sort_order));
+}
+
+async function loadWarrantyCompanies(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/warrantycompanies`);
+    if(!res.ok) throw new Error('bad response');
+    warrantyCompanyRows = await res.json();
+    usingDemoDataWarranty = false;
+  }catch(err){
+    warrantyCompanyRows = JSON.parse(JSON.stringify(SEED_DATA_WARRANTY));
+    usingDemoDataWarranty = true;
+  }
+  warrantyCompanyRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
 async function loadEngineOil(){
@@ -801,6 +838,7 @@ const TABLE_ACTIONS = {
   laborrates:   { edit: 'openLaborRateEdit',  delete: 'deleteLaborRateRow' },
   mmcodes:      { edit: 'openMMEdit',         delete: 'deleteMMRow' },
   vendor:       { edit: 'openVendorEdit',     delete: 'deleteVendorRow' },
+  warranty:     { edit: 'openWarrantyEdit',   delete: 'deleteWarrantyRow' },
   oilguide:     { edit: 'openOilEdit',        delete: 'deleteOilRow' },
   otherfluids:  { edit: 'openOtherFluidEdit', delete: 'deleteOtherFluidRow' },
   fluidparts:   { edit: 'openFluidPartEdit',  delete: 'deleteFluidPartRow' },
@@ -960,6 +998,79 @@ function vendorServiceActionButtons(vendorId, serviceId){
   <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteServiceRow('${vendorId}','${serviceId}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/></svg></button>`;
 }
 
+function normalizeUrl(url){
+  if(!url) return '';
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+function warrantyCompanyCardHTML(w, editable){
+  const suggested = w.last_rate != null ? Number(w.last_rate) + 10 : null;
+  const maxAllowed = w.last_rate != null ? Number(w.last_rate) + 15 : null;
+  const metaBits = [];
+  if(w.phone) metaBits.push(`<span class="vendor-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4.5h3l1.4 3.6-1.9 1.6a11 11 0 0 0 5.8 5.8l1.6-1.9 3.6 1.4v3a1 1 0 0 1-1.1 1C10.7 18.6 5.4 13.3 4 5.6A1 1 0 0 1 5 4.5Z"/></svg>${escapeHtml(w.phone)}</span>`);
+  if(w.claims_url) metaBits.push(`<span class="vendor-meta-item"><a href="${escapeAttr(normalizeUrl(w.claims_url))}" target="_blank" rel="noopener" class="warranty-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:5px;"><path d="M14 4h6v6M10 14 20 4M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg>Claims portal</a></span>`);
+
+  return `<div class="table-wrap warranty-card">
+    <div class="vendor-card-head">
+      <div>
+        <div class="vendor-name">${escapeHtml(w.name)}</div>
+        ${metaBits.length ? `<div class="vendor-meta">${metaBits.join('')}</div>` : ''}
+      </div>
+      ${editable ? `<div class="actions-cell">${actionButtons(w.id, 'warranty')}</div>` : ''}
+    </div>
+    <div class="warranty-body">
+      <div class="warranty-cred-row">
+        <div class="warranty-cred">
+          <div class="warranty-cred-label">Username</div>
+          <div class="warranty-cred-value">
+            <span>${w.username ? escapeHtml(w.username) : '—'}</span>
+            ${w.username ? `<button class="btn btn-ghost btn-sm" onclick="copyToClipboard('${escapeAttr(w.username)}', this)">Copy</button>` : ''}
+          </div>
+        </div>
+        <div class="warranty-cred">
+          <div class="warranty-cred-label">Password</div>
+          <div class="warranty-cred-value">
+            <span class="warranty-password-mask" data-value="${escapeAttr(w.password || '')}">${w.password ? '••••••••' : '—'}</span>
+            ${w.password ? `<button class="btn btn-ghost btn-sm" onclick="toggleWarrantyPassword(this)">Show</button><button class="btn btn-ghost btn-sm" onclick="copyToClipboard('${escapeAttr(w.password)}', this)">Copy</button>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="warranty-rate-row">
+        <div class="warranty-rate-block">
+          <div class="warranty-rate-label">Last used rate</div>
+          <div class="warranty-rate-value">${w.last_rate != null ? fmtMoney(w.last_rate) + '/hr' : '—'}</div>
+          ${w.last_rate_date ? `<div class="warranty-rate-date">${escapeHtml(w.last_rate_date)}</div>` : ''}
+        </div>
+        ${suggested != null ? `<div class="warranty-rate-block warranty-rate-suggested">
+          <div class="warranty-rate-label">Try next</div>
+          <div class="warranty-rate-value">${fmtMoney(suggested)}/hr</div>
+          <div class="warranty-rate-note">Don't exceed ${fmtMoney(maxAllowed)}/hr — bigger jumps get held for paperwork</div>
+        </div>` : ''}
+      </div>
+      ${w.notes ? `<div class="warranty-notes">${escapeHtml(w.notes)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+async function copyToClipboard(text, btn){
+  try{
+    await navigator.clipboard.writeText(text);
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+  }catch(e){
+    alert('Could not copy — your browser may be blocking clipboard access.');
+  }
+}
+
+function toggleWarrantyPassword(btn){
+  const row = btn.closest('.warranty-cred-value');
+  const span = row.querySelector('.warranty-password-mask');
+  const isMasked = span.textContent.includes('•');
+  span.textContent = isMasked ? span.dataset.value : '••••••••';
+  btn.textContent = isMasked ? 'Hide' : 'Show';
+}
+
 function renderVendorsPage(){
   return `
     <div class="topbar">
@@ -970,10 +1081,24 @@ function renderVendorsPage(){
     </div>
     ${demoBanner(usingDemoDataVendors, 'vendors')}
     ${vendorRows.map(v => vendorCardHTML(v, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet.</div></div>`}
+    <div class="section-label">Extended warranty companies</div>
+    <div class="desc" style="margin-bottom:14px;">Account logins and claim labor rates — nudge the rate up about $10 each call; jumps past $15 tend to get held for paperwork.</div>
+    ${demoBanner(usingDemoDataWarranty, 'warrantycompanies')}
+    ${warrantyCompanyRows.map(w => warrantyCompanyCardHTML(w, false)).join('') || `<div class="table-wrap"><div class="empty-hint">No warranty companies yet.</div></div>`}
   `;
 }
 
+function switchVendorSettingsSubTab(tab){
+  vendorSettingsSubTab = tab;
+  render();
+}
+
+function warrantyCompaniesSettingsListHTML(){
+  return warrantyCompanyRows.map(w => warrantyCompanyCardHTML(w, true)).join('') || `<div class="table-wrap"><div class="empty-hint">No warranty companies yet. Add the first one.</div></div>`;
+}
+
 function renderVendorsSettings(){
+  const isVendors = vendorSettingsSubTab !== 'warranty';
   return `
     <div class="topbar">
       <div>
@@ -981,12 +1106,17 @@ function renderVendorsSettings(){
         <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openVendorAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add vendor</button>
+        <button class="btn btn-primary" onclick="${isVendors ? 'openVendorAdd' : 'openWarrantyAdd'}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add ${isVendors ? 'vendor' : 'warranty company'}</button>
       </div>
     </div>
     ${settingsTabsHTML()}
-    ${demoBanner(usingDemoDataVendors, 'vendors')}
-    ${vendorRows.map(v => vendorCardHTML(v, true)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet. Add the first one.</div></div>`}
+    <div class="settings-tabs settings-tabs-sub">
+      <button class="settings-tab${isVendors ? ' active' : ''}" onclick="switchVendorSettingsSubTab('vendors')">Vendors</button>
+      <button class="settings-tab${!isVendors ? ' active' : ''}" onclick="switchVendorSettingsSubTab('warranty')">Extended Warranty Companies</button>
+    </div>
+    ${isVendors
+      ? demoBanner(usingDemoDataVendors, 'vendors') + (vendorRows.map(v => vendorCardHTML(v, true)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet. Add the first one.</div></div>`)
+      : demoBanner(usingDemoDataWarranty, 'warrantycompanies') + warrantyCompaniesSettingsListHTML()}
   `;
 }
 
@@ -1999,6 +2129,7 @@ async function render(){
     main.innerHTML = renderMMCodesPage();
   } else if(currentPage === 'vendors'){
     if(vendorRows.length === 0) await loadVendors();
+    if(warrantyCompanyRows.length === 0) await loadWarrantyCompanies();
     main.innerHTML = renderVendorsPage();
   } else if(currentPage === 'oilguide'){
     if(engineOilRows.length === 0) await loadEngineOil();
@@ -2025,6 +2156,7 @@ async function render(){
     if(laborRateRows.length === 0) await loadLaborRates();
     if(mmRows.length === 0) await loadMMCodes();
     if(vendorRows.length === 0) await loadVendors();
+    if(warrantyCompanyRows.length === 0) await loadWarrantyCompanies();
     if(engineOilRows.length === 0) await loadEngineOil();
     if(fluidPartsRows.length === 0) await loadFluidParts();
     if(otherFluidsRows.length === 0) await loadOtherFluids();
@@ -2271,6 +2403,7 @@ function handleModalSave(){
   if(editingTable === 'mmcodes') saveMMRow();
   else if(editingTable === 'vendor') saveVendorRow();
   else if(editingTable === 'vendorService') saveServiceRow();
+  else if(editingTable === 'warranty') saveWarrantyRow();
   else if(editingTable === 'oilguide') saveOilRow();
   else if(editingTable === 'otherfluids') saveOtherFluidRow();
   else if(editingTable === 'fluidparts') saveFluidPartRow();
@@ -3611,6 +3744,117 @@ async function deleteLaborRateRow(id){
   render();
 }
 
+/* ---------- Extended Warranty Companies CRUD ---------- */
+function emptyWarranty(){
+  return { name:'', phone:'', claims_url:'', username:'', password:'', last_rate:'', last_rate_date:'', notes:'' };
+}
+
+function openWarrantyAdd(){
+  editingId = null;
+  editingTable = 'warranty';
+  document.getElementById('modalTitle').textContent = 'Add warranty company';
+  document.getElementById('modalBody').innerHTML = warrantyModalFormHTML(emptyWarranty());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openWarrantyEdit(id){
+  const row = warrantyCompanyRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'warranty';
+  document.getElementById('modalTitle').textContent = 'Edit warranty company';
+  document.getElementById('modalBody').innerHTML = warrantyModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function warrantyModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Company name</label>
+        <input type="text" id="w_name" value="${escapeAttr(r.name)}" placeholder="e.g. Endurance">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Phone</label>
+        <input type="text" id="w_phone" value="${escapeAttr(r.phone)}" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label>Claims portal URL</label>
+        <input type="text" id="w_claims_url" value="${escapeAttr(r.claims_url)}" placeholder="e.g. claims.endurancewarranty.com">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="w_username" value="${escapeAttr(r.username)}" placeholder="Optional">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="text" id="w_password" value="${escapeAttr(r.password)}" placeholder="Optional">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Last used rate ($/hr)</label>
+        <input type="number" step="0.01" id="w_last_rate" value="${r.last_rate ?? ''}">
+      </div>
+      <div class="field">
+        <label>Date used</label>
+        <input type="date" id="w_last_rate_date" value="${escapeAttr(r.last_rate_date)}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Notes</label>
+        <textarea id="w_notes" placeholder="Optional">${escapeHtml(r.notes||'')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+async function saveWarrantyRow(){
+  const payload = {
+    name: document.getElementById('w_name').value.trim(),
+    phone: type_or_null(document.getElementById('w_phone').value),
+    claims_url: type_or_null(document.getElementById('w_claims_url').value),
+    username: type_or_null(document.getElementById('w_username').value),
+    password: type_or_null(document.getElementById('w_password').value),
+    last_rate: numOrNull(document.getElementById('w_last_rate').value),
+    last_rate_date: type_or_null(document.getElementById('w_last_rate_date').value),
+    notes: type_or_null(document.getElementById('w_notes').value),
+  };
+  if(!payload.name){
+    alert('Company name is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(warrantyCompanyRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataWarranty){
+      try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+    }
+  } else {
+    const newRow = { id: 'local-' + Date.now(), sort_order: (warrantyCompanyRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    warrantyCompanyRows.push(newRow);
+    if(!usingDemoDataWarranty){
+      try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteWarrantyRow(id){
+  if(!confirm('Delete this warranty company? This can\'t be undone.')) return;
+  warrantyCompanyRows = warrantyCompanyRows.filter(r => r.id !== id);
+  if(!usingDemoDataWarranty){
+    try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies/${id}`, {method:'DELETE'}); }catch(e){}
+  }
+  render();
+}
+
 function modalFormHTML(r){
   return `
     <div class="field-row">
@@ -3812,6 +4056,7 @@ const SEED_DATA_LABORRATES = [{"id": "lrseed-10", "sort_order": 10, "rate_name":
 const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main", "code_label": "A or B", "description": "Replace Engine Oil & Oil Filter.", "time_estimate": null}, {"id": "mmseed-20", "sort_order": 20, "code_type": "checklist", "code_label": null, "description": "Check front and rear brakes. Check brake pads and disc thickness. Check for damage. Check calipers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-30", "sort_order": 30, "code_type": "checklist", "code_label": null, "description": "Check Parking Brake Adjustment.", "time_estimate": null}, {"id": "mmseed-40", "sort_order": 40, "code_type": "checklist", "code_label": null, "description": "Inspect Tie-Rod Ends, Steering Gearbox & Gearbox Boots.", "time_estimate": null}, {"id": "mmseed-50", "sort_order": 50, "code_type": "checklist", "code_label": null, "description": "Check steering linkage.", "time_estimate": null}, {"id": "mmseed-60", "sort_order": 60, "code_type": "checklist", "code_label": null, "description": "Check Boots for Damage and Leaking Grease.", "time_estimate": null}, {"id": "mmseed-70", "sort_order": 70, "code_type": "checklist", "code_label": null, "description": "Inspect Suspension Components.", "time_estimate": null}, {"id": "mmseed-80", "sort_order": 80, "code_type": "checklist", "code_label": null, "description": "Check Condition of Ball Joint Boots for Deterioration, Damage & Tightness.", "time_estimate": null}, {"id": "mmseed-90", "sort_order": 90, "code_type": "checklist", "code_label": null, "description": "Inspect Driveshaft Boots.", "time_estimate": null}, {"id": "mmseed-100", "sort_order": 100, "code_type": "checklist", "code_label": null, "description": "Inspect Brake Hoses & Lines, Including VSA Lines.", "time_estimate": null}, {"id": "mmseed-110", "sort_order": 110, "code_type": "checklist", "code_label": null, "description": "Check Brake Master Cylinder & VSA Modulator-Control Unit for Damage or Leakage.", "time_estimate": null}, {"id": "mmseed-120", "sort_order": 120, "code_type": "checklist", "code_label": null, "description": "Inspect All Fluid Levels & Condition of Fluids. Including: Engine Coolant, Brake Fluid, Windshield Washer Fluid, Power Steering Fluid(if applicable).", "time_estimate": null}, {"id": "mmseed-130", "sort_order": 130, "code_type": "checklist", "code_label": null, "description": "Check catalytic converter heat shields. Check Exhaust Pipes. Check mufflers for damage, leaks, and tightness.", "time_estimate": null}, {"id": "mmseed-140", "sort_order": 140, "code_type": "checklist", "code_label": null, "description": "Inspect Fuel Lines & Connections.", "time_estimate": null}, {"id": "mmseed-150", "sort_order": 150, "code_type": "checklist", "code_label": null, "description": "Inspect Engine Air Cleaner Filter.", "time_estimate": null}, {"id": "mmseed-160", "sort_order": 160, "code_type": "checklist", "code_label": null, "description": "Inspect Cabin(HVAC) Filter.", "time_estimate": null}, {"id": "mmseed-1010", "sort_order": 1010, "code_type": "sub", "code_label": "1.0", "description": "Rotate Tires(if needed), Check Tire Inflation & Condition.", "time_estimate": "45 MINS - 1 HR"}, {"id": "mmseed-1020", "sort_order": 1020, "code_type": "sub", "code_label": "2.0", "description": "Replace Engine Air Cleaner Filter, Replace Cabin(HVAC) Filter.", "time_estimate": "N/A Replace on as-need basis (Inspection of filters included in A or B services)"}, {"id": "mmseed-1030", "sort_order": 1030, "code_type": "sub", "code_label": "3.0", "description": "Replace Transmission Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1040", "sort_order": 1040, "code_type": "sub", "code_label": "4.0", "description": "Replace Engine Spark Plugs, Replace Engine Valve Cover Gasket, Adjust Engine Valves, Replace Water Pump. For Vehicles Equipped with Timing Belt Add: Replace Timing Belt & Timing Belt Tensioner.", "time_estimate": "NEED CAR ALL DAY. Always confirm parts in-stock prior to customer arrival."}, {"id": "mmseed-1050", "sort_order": 1050, "code_type": "sub", "code_label": "5.0", "description": "Replace Engine Coolant.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1060", "sort_order": 1060, "code_type": "sub", "code_label": "6.0", "description": "Replace Rear Differential Fluid.", "time_estimate": "ADD 1 HR"}, {"id": "mmseed-1070", "sort_order": 1070, "code_type": "sub", "code_label": "7.0", "description": "Replace Brake Fluid.", "time_estimate": "ADD 1 HR"}];
 
 const SEED_DATA_VENDORS = [{"id": "vseed-10", "sort_order": 10, "name": null, "phone": null, "lead_time": null, "notes": null, "vendor_services": [{"id": "vsseed-10", "vendor_id": "vseed-10", "sort_order": 10, "service": "Full Vehicle Detail", "cost": 210.0, "customer_price": 262.5}, {"id": "vsseed-20", "vendor_id": "vseed-10", "sort_order": 20, "service": "Interior Only Detail", "cost": 120.0, "customer_price": 150.0}, {"id": "vsseed-30", "vendor_id": "vseed-10", "sort_order": 30, "service": "Exterior Only Detail", "cost": 120.0, "customer_price": 150.0}]}, {"id": "vseed-20", "sort_order": 20, "name": null, "phone": "360-557-8016", "lead_time": "2 day lead time", "notes": null, "vendor_services": [{"id": "vsseed-40", "vendor_id": "vseed-20", "sort_order": 10, "service": "Glass Installation", "cost": 159.0, "customer_price": 198.75}, {"id": "vsseed-50", "vendor_id": "vseed-20", "sort_order": 20, "service": "Pre-collision System Calibration", "cost": 252.75, "customer_price": 315.94}]}];
+const SEED_DATA_WARRANTY = [];
 
 const SEED_DATA_OILGUIDE = [{"id": "oilseed-10", "sort_order": 10, "model": "Accord L4 & V6", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-20", "sort_order": 20, "model": "Accord L4 & V6", "year_start": 2001, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-30", "sort_order": 30, "model": "Accord L4 & V6", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-40", "sort_order": 40, "model": "Accord Hybrid", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-50", "sort_order": 50, "model": "Civic", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-60", "sort_order": 60, "model": "Civic", "year_start": 2001, "year_end": 2010, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2010, "verified": true}, {"id": "oilseed-70", "sort_order": 70, "model": "Civic", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-80", "sort_order": 80, "model": "Civic GX", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-90", "sort_order": 90, "model": "Civic GX", "year_start": 2002, "year_end": 2013, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-100", "sort_order": 100, "model": "Civic Hybrid", "year_start": 2006, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-110", "sort_order": 110, "model": "Civic Si", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-120", "sort_order": 120, "model": "Civic Si", "year_start": 2001, "year_end": 2004, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-130", "sort_order": 130, "model": "Civic Si", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-140", "sort_order": 140, "model": "Civic Si", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-150", "sort_order": 150, "model": "Crosstour", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-160", "sort_order": 160, "model": "CR-V", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-170", "sort_order": 170, "model": "CR-V", "year_start": 2002, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-180", "sort_order": 180, "model": "CR-V", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-190", "sort_order": 190, "model": "CR-Z", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-200", "sort_order": 200, "model": "Element", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-210", "sort_order": 210, "model": "Element", "year_start": 2010, "year_end": 2011, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-220", "sort_order": 220, "model": "Fit", "year_start": 2007, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2008, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-230", "sort_order": 230, "model": "Fit", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-240", "sort_order": 240, "model": "Insight", "year_start": 2000, "year_end": 2006, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-250", "sort_order": 250, "model": "Insight", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-260", "sort_order": 260, "model": "Odyssey", "year_start": 1999, "year_end": 2004, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-270", "sort_order": 270, "model": "Odyssey", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-280", "sort_order": 280, "model": "Odyssey", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-290", "sort_order": 290, "model": "Pilot", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-300", "sort_order": 300, "model": "Pilot", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-310", "sort_order": 310, "model": "Ridgeline", "year_start": 2006, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2006, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-320", "sort_order": 320, "model": "Ridgeline", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-330", "sort_order": 330, "model": "S2000", "year_start": 1999, "year_end": 2009, "oil_weight": "10W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}];
 const SEED_DATA_FLUIDPARTS = [{"id": "fpseed-10", "sort_order": 10, "fluid_name": "ATF-DW1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9008", "color_hex": "#1E6FD9", "notes": null, "verified": true}, {"id": "fpseed-20", "sort_order": 20, "fluid_name": "ATF-Type 2.0", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9015*", "color_hex": "#E8C93A", "notes": null, "verified": true}, {"id": "fpseed-30", "sort_order": 30, "fluid_name": "ATF-Type 3.1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9017", "color_hex": "#C23A8B", "notes": null, "verified": true}, {"id": "fpseed-40", "sort_order": 40, "fluid_name": "CVT Fluid", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9006", "color_hex": "#4C6B2F", "notes": null, "verified": true}, {"id": "fpseed-50", "sort_order": 50, "fluid_name": "HCF-2", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-HCF2", "color_hex": "#D9A61E", "notes": null, "verified": true}, {"id": "fpseed-60", "sort_order": 60, "fluid_name": "MTF", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08798-9031", "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-70", "sort_order": 70, "fluid_name": "Dual Pump Fluid (DPSF II)", "fluid_category": "Rear Differential", "container": "Quart", "part_number": "08200-9007", "color_hex": "#C1622A", "notes": null, "verified": true}, {"id": "fpseed-80", "sort_order": 80, "fluid_name": "VTM-4", "fluid_category": "Rear Differential", "container": "Gallon", "part_number": "08200-9014**", "color_hex": "#7FB6D9", "notes": null, "verified": true}, {"id": "fpseed-90", "sort_order": 90, "fluid_name": "HGO-1", "fluid_category": "Transfer Assembly Fluid", "container": "Quart", "part_number": null, "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-100", "sort_order": 100, "fluid_name": "Antifreeze/Coolant Type 2", "fluid_category": "Antifreeze/Coolant", "container": "Gallon", "part_number": "01999-9011", "color_hex": "#4F9B3E", "notes": null, "verified": true}, {"id": "fpseed-110", "sort_order": 110, "fluid_name": "DOT-3", "fluid_category": "Brake Fluid", "container": "12 fl oz", "part_number": "08798-9008", "color_hex": "#3A2E8C", "notes": null, "verified": true}, {"id": "fpseed-120", "sort_order": 120, "fluid_name": "Power Steering Fluid", "fluid_category": "Power Steering Fluid", "container": "12 fl oz", "part_number": "08206-9002", "color_hex": "#C0392B", "notes": null, "verified": true}, {"id": "fpseed-130", "sort_order": 130, "fluid_name": "Washer Concentrate/Antifreeze", "fluid_category": "Windshield Washer", "container": "16 fl oz", "part_number": "08798-9025", "color_hex": "#B3A6D9", "notes": null, "verified": true}];
