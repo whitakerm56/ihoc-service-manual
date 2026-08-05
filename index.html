@@ -235,23 +235,15 @@
     border-radius:6px; text-transform:uppercase; letter-spacing:.03em; color:#191A1C;
   }
 
-  .tracker-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:30px;}
-  .tracker-card{padding:16px 18px;}
-  .tracker-head{margin-bottom:12px;}
-  .tracker-name{font-family:var(--display); font-weight:600; font-size:15px;}
-  .tracker-subtitle{font-size:12px; color:var(--ink-faint); font-style:italic; margin-top:2px;}
-  .tracker-flow{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
-  .tracker-step{background:#1E2023; border:1px solid var(--border-strong); border-radius:8px; padding:8px 11px; font-size:12px; color:var(--ink);}
-  .tracker-arrow{width:14px; height:14px; color:var(--ink-faint); flex-shrink:0;}
+  .subprocess-section{margin-bottom:34px;}
+  .subprocess-head{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .subprocess-name{font-family:var(--display); font-weight:600; font-size:16px;}
+  .tracker-subtitle{font-size:12px; color:var(--ink-faint); font-style:italic;}
 
   .rules-list{display:flex; flex-direction:column; gap:10px; margin-bottom:10px;}
   .rule-card{display:flex; align-items:flex-start; gap:12px; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--brick); border-radius:8px; padding:12px 16px;}
   .rule-number{font-family:var(--display); font-weight:600; font-size:13px; color:var(--brick); background:var(--brick-light); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
   .rule-text{font-size:13.5px; line-height:1.5; color:var(--ink); padding-top:2px;}
-
-  @media (max-width: 900px){
-    .tracker-grid{grid-template-columns:1fr;}
-  }
 
   /* ---------- oil application guide ---------- */
   .oil-legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px;}
@@ -1317,16 +1309,19 @@ function flowChartHTML(){
   return `<div class="flow-chart-wrap"><div class="flow-chart">${stagesHtml || `<div class="empty-hint">No lifecycle steps yet.</div>`}</div></div>`;
 }
 
-function subprocessTrackerHTML(sp){
+function subprocessFlowHTML(sp){
   const steps = sp.ro_subprocess_steps || [];
+  const color = roleColor(sp.primary_role);
+  const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>`;
   const body = steps.length
-    ? `<div class="tracker-flow">${steps.map((s,i) => `${i>0 ? `<svg class="tracker-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>` : ''}<div class="tracker-step">${escapeHtml(s.step_text)}</div>`).join('')}</div>`
+    ? `<div class="flow-chart-wrap"><div class="flow-chart">${steps.map((s,i) => `${i>0 ? `<div class="flow-arrow">${arrowSvg}</div>` : ''}<div class="flow-stage"><div class="flow-step" style="border-left-color:${color}">${escapeHtml(s.step_text)}</div></div>`).join('')}</div></div>`
     : `<div class="empty-hint" style="padding:16px 4px; text-align:left;">No steps recorded for this process yet — add some in Settings.</div>`;
-  return `<div class="table-wrap tracker-card">
-    <div class="tracker-head">
-      <div class="tracker-name">${escapeHtml(sp.name)}</div>
-      ${sp.subtitle ? `<div class="tracker-subtitle">${escapeHtml(sp.subtitle)}</div>` : ''}
+  return `<div class="subprocess-section">
+    <div class="subprocess-head">
+      <div class="subprocess-name">${escapeHtml(sp.name)}</div>
+      ${sp.roles_label ? `<span class="role-badge" style="background:${color}">${escapeHtml(sp.roles_label)}</span>` : ''}
     </div>
+    ${sp.subtitle ? `<div class="tracker-subtitle" style="margin-bottom:12px;">${escapeHtml(sp.subtitle)}</div>` : ''}
     ${body}
   </div>`;
 }
@@ -1355,9 +1350,7 @@ function renderProcessPage(){
     <div class="board-legend">${ROLE_ORDER.filter(r => lifecycleRows.some(x => x.role === r)).map(r => `<span class="board-legend-item"><span class="board-legend-dot" style="background:${roleColor(r)}"></span>${r}</span>`).join('')}</div>
     ${flowChartHTML()}
     <div class="section-label">Sub-processes</div>
-    <div class="tracker-grid">
-      ${subprocessRows.map(sp => subprocessTrackerHTML(sp)).join('')}
-    </div>
+    ${subprocessRows.map(sp => subprocessFlowHTML(sp)).join('')}
     <div class="section-label">RO rules &amp; policies</div>
     ${rulesListHTML()}
   `;
@@ -1892,7 +1885,7 @@ function subprocessSettingsCardHTML(sp){
   return `<div class="table-wrap vendor-card">
     <div class="vendor-card-head">
       <div>
-        <div class="vendor-name">${escapeHtml(sp.name)}</div>
+        <div class="vendor-name">${escapeHtml(sp.name)}${sp.roles_label ? ` <span class="role-badge" style="background:${roleColor(sp.primary_role)}">${escapeHtml(sp.roles_label)}</span>` : ''}</div>
         ${sp.subtitle ? `<div class="vendor-sub">${escapeHtml(sp.subtitle)}</div>` : ''}
       </div>
       <div class="actions-cell">${actionButtons(sp.id, 'subprocess')}</div>
@@ -3175,7 +3168,7 @@ async function deleteLifecycleRow(id){
 
 /* ---------- Sub-processes CRUD ---------- */
 function emptySubprocess(){
-  return { name:'', subtitle:'' };
+  return { name:'', subtitle:'', primary_role: ROLE_ORDER[0], roles_label:'' };
 }
 
 function openSubprocessAdd(){
@@ -3197,6 +3190,7 @@ function openSubprocessEdit(id){
 }
 
 function subprocessModalFormHTML(sp){
+  const roleOptions = ROLE_ORDER.map(role => `<option value="${role}" ${sp.primary_role === role ? 'selected':''}>${role}</option>`).join('');
   return `
     <div class="field-row">
       <div class="field full">
@@ -3210,6 +3204,16 @@ function subprocessModalFormHTML(sp){
         <input type="text" id="sp_subtitle" value="${escapeAttr(sp.subtitle)}" placeholder="Optional">
       </div>
     </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Chip color (role)</label>
+        <select id="sp_primary_role">${roleOptions}</select>
+      </div>
+      <div class="field">
+        <label>Roles badge text</label>
+        <input type="text" id="sp_roles_label" value="${escapeAttr(sp.roles_label)}" placeholder="e.g. Advisor or BDC">
+      </div>
+    </div>
   `;
 }
 
@@ -3217,6 +3221,8 @@ async function saveSubprocessRow(){
   const payload = {
     name: document.getElementById('sp_name').value.trim(),
     subtitle: type_or_null(document.getElementById('sp_subtitle').value),
+    primary_role: document.getElementById('sp_primary_role').value,
+    roles_label: type_or_null(document.getElementById('sp_roles_label').value),
   };
   if(!payload.name){
     alert('Name is required.');
@@ -4073,7 +4079,7 @@ const SEED_DATA_PHONES = [{"id": "pxseed-80", "sort_order": 80, "name": null, "r
 const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_number": "1112", "group_name": "BDC / Reception", "members": "601, 602, 700"}, {"id": "hgseed-20", "sort_order": 20, "group_number": "1105", "group_name": "Service Advisors", "members": "200, 202, 203, 204"}, {"id": "hgseed-30", "sort_order": 30, "group_number": "1108", "group_name": "Parts", "members": "300, 301, 303, 304"}, {"id": "hgseed-40", "sort_order": 40, "group_number": "1106", "group_name": "Technicians", "members": "112, 205, 208, 209"}];
 
 const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "step_number": 1, "phase": null, "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "step_number": 2, "phase": null, "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-30", "sort_order": 30, "step_number": 3, "phase": null, "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-40", "sort_order": 40, "step_number": 4, "phase": null, "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-50", "sort_order": 50, "step_number": 4, "phase": null, "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-60", "sort_order": 60, "step_number": 5, "phase": null, "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "step_number": 6, "phase": null, "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "step_number": 7, "phase": null, "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "step_number": 7, "phase": null, "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "step_number": 8, "phase": null, "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-110", "sort_order": 110, "step_number": 8, "phase": null, "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-120", "sort_order": 120, "step_number": 9, "phase": null, "role": "Technician", "step_text": "Return Keys and Paperwork to the Advisor"}, {"id": "lcseed-130", "sort_order": 130, "step_number": 9, "phase": null, "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-140", "sort_order": 140, "step_number": 10, "phase": null, "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-150", "sort_order": 150, "step_number": 11, "phase": null, "role": "Advisor", "step_text": "Return Keys and Paperwork to Manager for Dispatching"}, {"id": "lcseed-160", "sort_order": 160, "step_number": 11, "phase": null, "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-170", "sort_order": 170, "step_number": 12, "phase": null, "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-180", "sort_order": 180, "step_number": 13, "phase": null, "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-190", "sort_order": 190, "step_number": 14, "phase": null, "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-200", "sort_order": 200, "step_number": 14, "phase": null, "role": "QC Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-210", "sort_order": 210, "step_number": 15, "phase": null, "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-220", "sort_order": 220, "step_number": 16, "phase": null, "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-230", "sort_order": 230, "step_number": 17, "phase": null, "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-240", "sort_order": 240, "step_number": 18, "phase": null, "role": "QC Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
-const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
+const SEED_DATA_SUBPROCESSES = [{"id": "spseed-30", "sort_order": 10, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}], "primary_role": "Advisor", "roles_label": "Advisor or BDC"}, {"id": "spseed-40", "sort_order": 20, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}], "primary_role": "Advisor", "roles_label": "Advisor and BDC"}, {"id": "spseed-10", "sort_order": 30, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}], "primary_role": "Advisor", "roles_label": "Advisor"}, {"id": "spseed-20", "sort_order": 40, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": [], "primary_role": "Advisor", "roles_label": "Advisor"}];
 const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
 
 const SEED_DATA_ORG = [{"id": "orgseed-john", "sort_order": 10, "name": "John Csernotta", "employee_number": null, "tech_number": null, "title": "President", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": null, "work_days": null, "extension": null}, {"id": "orgseed-mason", "sort_order": 20, "name": "Mason Whitaker", "employee_number": null, "tech_number": null, "title": "Service and Parts Director", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-john", "work_days": null, "extension": "200"}, {"id": "orgseed-jared", "sort_order": 30, "name": "Jared Scherieble", "employee_number": null, "tech_number": null, "title": "Parts Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null, "extension": "300"}, {"id": "orgseed-svcmgr", "sort_order": 40, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Service Drive Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-qcmgr", "sort_order": 50, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Quality Control Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-bdclead", "sort_order": 60, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Lead / Warranty Admin", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-sonja", "sort_order": 70, "name": "Sonja Ault", "employee_number": null, "tech_number": null, "title": "Office Manager", "department": "Management", "schedule": null, "photo_url": null, "is_tbd": false, "reports_to": "orgseed-mason", "work_days": null, "extension": null}, {"id": "orgseed-waylon", "sort_order": 80, "name": "Waylon Foote", "employee_number": "53", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "204"}, {"id": "orgseed-danny", "sort_order": 90, "name": "Danny Pagel Jensen", "employee_number": "452", "tech_number": null, "title": "Main Shop Advisor", "department": "Advisor", "schedule": "Monday - Friday 7:30-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "202"}, {"id": "orgseed-kaci", "sort_order": 100, "name": "Kaci Phansisay", "employee_number": "457", "tech_number": null, "title": "Express Advisor", "department": "Advisor", "schedule": "Tuesday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "203"}, {"id": "orgseed-jesse", "sort_order": 110, "name": "Jesse Wharton", "employee_number": "453", "tech_number": null, "title": "Team Lead Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "208"}, {"id": "orgseed-erick", "sort_order": 120, "name": "Erick Hinchcliff", "employee_number": "443", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "112"}, {"id": "orgseed-kassandra", "sort_order": 130, "name": "Kassandra Pomme", "employee_number": "431", "tech_number": null, "title": "Main Shop Tech", "department": "Technician", "schedule": "Monday - Friday 8-5", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "extension": "209"}, {"id": "orgseed-tate", "sort_order": 140, "name": "Tate Tornow", "employee_number": "432", "tech_number": "1000", "title": "Express Tech", "department": "Express Tech", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": "205"}, {"id": "orgseed-zach", "sort_order": 150, "name": "Zach Anderson", "employee_number": "454", "tech_number": "2000", "title": "Express Tech", "department": "Express Tech", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": null}, {"id": "orgseed-kyen", "sort_order": 160, "name": "Kyen Phansisay", "employee_number": "445", "tech_number": "3000", "title": "Express Tech", "department": "Express Tech", "schedule": "Monday - Friday 7:30-6pm, Sat 8 - 4", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-svcmgr", "work_days": null, "extension": "205"}, {"id": "orgseed-greeter", "sort_order": 170, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "Greeter / Porter", "department": "Front Office", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-sonja", "work_days": null, "extension": null}, {"id": "orgseed-tara", "sort_order": 180, "name": "Tara Gray", "employee_number": null, "tech_number": null, "title": "Receptionist", "department": "Front Office", "schedule": "Tuesday - Saturday 9am-5pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-sonja", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "700"}, {"id": "orgseed-stuart", "sort_order": 190, "name": "Stuart Wilson", "employee_number": "419", "tech_number": null, "title": "Parts Associate", "department": "Parts", "schedule": "Tuesday - Saturday 8:30-6pm", "photo_url": null, "is_tbd": false, "reports_to": "orgseed-jared", "work_days": ["Tue", "Wed", "Thu", "Fri", "Sat"], "extension": "304"}, {"id": "orgseed-bdcrep", "sort_order": 200, "name": "To Be Determined", "employee_number": null, "tech_number": null, "title": "BDC Rep", "department": "BDC", "schedule": null, "photo_url": null, "is_tbd": true, "reports_to": "orgseed-bdclead", "work_days": null, "extension": null}];
