@@ -2477,13 +2477,13 @@ async function saveVendorRow(){
   if(editingId){
     Object.assign(vendorRows.find(v => v.id === editingId), payload);
     if(!usingDemoDataVendors){
-      try{ await fetch(`${CONFIG.API_BASE}/vendors/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/vendors/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newVendor = { id: 'local-' + Date.now(), sort_order: (vendorRows.at(-1)?.sort_order || 0) + 10, vendor_services: [], ...payload };
     vendorRows.push(newVendor);
     if(!usingDemoDataVendors){
-      try{ await fetch(`${CONFIG.API_BASE}/vendors`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newVendor)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/vendors`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newVendor)});
     }
   }
   closeModal();
@@ -2494,7 +2494,7 @@ async function deleteVendorRow(id){
   if(!confirm('Delete this vendor and all of its services? This can\'t be undone.')) return;
   vendorRows = vendorRows.filter(v => v.id !== id);
   if(!usingDemoDataVendors){
-    try{ await fetch(`${CONFIG.API_BASE}/vendors/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/vendors/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -2562,13 +2562,13 @@ async function saveServiceRow(){
   if(editingId){
     Object.assign(vendor.vendor_services.find(s => s.id === editingId), payload);
     if(!usingDemoDataVendors){
-      try{ await fetch(`${CONFIG.API_BASE}/vendor-services/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/vendor-services/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newService = { id: 'local-' + Date.now(), vendor_id: vendor.id, sort_order: (vendor.vendor_services.at(-1)?.sort_order || 0) + 10, ...payload };
     vendor.vendor_services.push(newService);
     if(!usingDemoDataVendors){
-      try{ await fetch(`${CONFIG.API_BASE}/vendor-services`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newService)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/vendor-services`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newService)});
     }
   }
   closeModal();
@@ -2580,7 +2580,7 @@ async function deleteServiceRow(vendorId, serviceId){
   const vendor = vendorRows.find(v => v.id === vendorId);
   if(vendor) vendor.vendor_services = (vendor.vendor_services || []).filter(s => s.id !== serviceId);
   if(!usingDemoDataVendors){
-    try{ await fetch(`${CONFIG.API_BASE}/vendor-services/${serviceId}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/vendor-services/${serviceId}`, {method:'DELETE'});
   }
   render();
 }
@@ -2670,13 +2670,13 @@ async function saveOilRow(){
   if(editingId){
     Object.assign(engineOilRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataOilGuide){
-      try{ await fetch(`${CONFIG.API_BASE}/oilguide/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/oilguide/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (engineOilRows.at(-1)?.sort_order || 0) + 10, ...payload };
     engineOilRows.push(newRow);
     if(!usingDemoDataOilGuide){
-      try{ await fetch(`${CONFIG.API_BASE}/oilguide`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/oilguide`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -2687,7 +2687,7 @@ async function deleteOilRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   engineOilRows = engineOilRows.filter(r => r.id !== id);
   if(!usingDemoDataOilGuide){
-    try{ await fetch(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -2697,7 +2697,7 @@ async function toggleOilVerified(id){
   if(!row) return;
   row.verified = !row.verified;
   if(!usingDemoDataOilGuide){
-    try{ await fetch(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/oilguide/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})});
   }
   render();
 }
@@ -2778,13 +2778,13 @@ async function saveOtherFluidRow(){
   if(editingId){
     Object.assign(otherFluidsRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataOtherFluids){
-      try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/otherfluids/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (otherFluidsRows.at(-1)?.sort_order || 0) + 10, ...payload };
     otherFluidsRows.push(newRow);
     if(!usingDemoDataOtherFluids){
-      try{ await fetch(`${CONFIG.API_BASE}/otherfluids`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/otherfluids`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -2795,7 +2795,7 @@ async function deleteOtherFluidRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   otherFluidsRows = otherFluidsRows.filter(r => r.id !== id);
   if(!usingDemoDataOtherFluids){
-    try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -2805,7 +2805,7 @@ async function toggleOtherFluidVerified(id){
   if(!row) return;
   row.verified = !row.verified;
   if(!usingDemoDataOtherFluids){
-    try{ await fetch(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/otherfluids/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})});
   }
   render();
 }
@@ -2892,13 +2892,13 @@ async function saveFluidPartRow(){
   if(editingId){
     Object.assign(fluidPartsRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataFluidParts){
-      try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/fluidparts/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (fluidPartsRows.at(-1)?.sort_order || 0) + 10, ...payload };
     fluidPartsRows.push(newRow);
     if(!usingDemoDataFluidParts){
-      try{ await fetch(`${CONFIG.API_BASE}/fluidparts`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/fluidparts`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -2909,7 +2909,7 @@ async function deleteFluidPartRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   fluidPartsRows = fluidPartsRows.filter(r => r.id !== id);
   if(!usingDemoDataFluidParts){
-    try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -2919,7 +2919,7 @@ async function toggleFluidPartVerified(id){
   if(!row) return;
   row.verified = !row.verified;
   if(!usingDemoDataFluidParts){
-    try{ await fetch(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/fluidparts/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({verified: row.verified})});
   }
   render();
 }
@@ -2983,13 +2983,13 @@ async function savePhoneRow(){
   if(editingId){
     Object.assign(phoneRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataPhones){
-      try{ await fetch(`${CONFIG.API_BASE}/phones/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/phones/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (phoneRows.at(-1)?.sort_order || 0) + 10, ...payload };
     phoneRows.push(newRow);
     if(!usingDemoDataPhones){
-      try{ await fetch(`${CONFIG.API_BASE}/phones`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/phones`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3000,7 +3000,7 @@ async function deletePhoneRow(id){
   if(!confirm('Delete this entry? This can\'t be undone.')) return;
   phoneRows = phoneRows.filter(r => r.id !== id);
   if(!usingDemoDataPhones){
-    try{ await fetch(`${CONFIG.API_BASE}/phones/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/phones/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3063,13 +3063,13 @@ async function saveHuntGroupRow(){
   if(editingId){
     Object.assign(huntGroupRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataHuntGroups){
-      try{ await fetch(`${CONFIG.API_BASE}/huntgroups/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/huntgroups/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (huntGroupRows.at(-1)?.sort_order || 0) + 10, ...payload };
     huntGroupRows.push(newRow);
     if(!usingDemoDataHuntGroups){
-      try{ await fetch(`${CONFIG.API_BASE}/huntgroups`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/huntgroups`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3080,7 +3080,7 @@ async function deleteHuntGroupRow(id){
   if(!confirm('Delete this hunt group? This can\'t be undone.')) return;
   huntGroupRows = huntGroupRows.filter(r => r.id !== id);
   if(!usingDemoDataHuntGroups){
-    try{ await fetch(`${CONFIG.API_BASE}/huntgroups/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/huntgroups/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3144,13 +3144,13 @@ async function saveLifecycleRow(){
   if(editingId){
     Object.assign(lifecycleRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataLifecycle){
-      try{ await fetch(`${CONFIG.API_BASE}/lifecycle/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/lifecycle/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (lifecycleRows.at(-1)?.sort_order || 0) + 10, ...payload };
     lifecycleRows.push(newRow);
     if(!usingDemoDataLifecycle){
-      try{ await fetch(`${CONFIG.API_BASE}/lifecycle`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/lifecycle`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3161,7 +3161,7 @@ async function deleteLifecycleRow(id){
   if(!confirm('Delete this step? This can\'t be undone.')) return;
   lifecycleRows = lifecycleRows.filter(r => r.id !== id);
   if(!usingDemoDataLifecycle){
-    try{ await fetch(`${CONFIG.API_BASE}/lifecycle/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/lifecycle/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3232,13 +3232,13 @@ async function saveSubprocessRow(){
   if(editingId){
     Object.assign(subprocessRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataSubprocesses){
-      try{ await fetch(`${CONFIG.API_BASE}/subprocesses/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/subprocesses/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (subprocessRows.at(-1)?.sort_order || 0) + 10, ro_subprocess_steps: [], ...payload };
     subprocessRows.push(newRow);
     if(!usingDemoDataSubprocesses){
-      try{ await fetch(`${CONFIG.API_BASE}/subprocesses`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/subprocesses`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3249,7 +3249,7 @@ async function deleteSubprocessRow(id){
   if(!confirm('Delete this sub-process and all of its steps? This can\'t be undone.')) return;
   subprocessRows = subprocessRows.filter(r => r.id !== id);
   if(!usingDemoDataSubprocesses){
-    try{ await fetch(`${CONFIG.API_BASE}/subprocesses/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/subprocesses/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3303,13 +3303,13 @@ async function saveSubStepRow(){
   if(editingId){
     Object.assign(sp.ro_subprocess_steps.find(s => s.id === editingId), payload);
     if(!usingDemoDataSubprocesses){
-      try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/subprocess-steps/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newStep = { id: 'local-' + Date.now(), subprocess_id: sp.id, sort_order: (sp.ro_subprocess_steps.at(-1)?.sort_order || 0) + 10, ...payload };
     sp.ro_subprocess_steps.push(newStep);
     if(!usingDemoDataSubprocesses){
-      try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStep)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/subprocess-steps`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStep)});
     }
   }
   closeModal();
@@ -3321,7 +3321,7 @@ async function deleteSubStep(subprocessId, stepId){
   const sp = subprocessRows.find(r => r.id === subprocessId);
   if(sp) sp.ro_subprocess_steps = (sp.ro_subprocess_steps || []).filter(s => s.id !== stepId);
   if(!usingDemoDataSubprocesses){
-    try{ await fetch(`${CONFIG.API_BASE}/subprocess-steps/${stepId}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/subprocess-steps/${stepId}`, {method:'DELETE'});
   }
   render();
 }
@@ -3370,13 +3370,13 @@ async function saveRuleRow(){
   if(editingId){
     Object.assign(roRulesRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataRules){
-      try{ await fetch(`${CONFIG.API_BASE}/rorules/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rorules/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (roRulesRows.at(-1)?.sort_order || 0) + 10, ...payload };
     roRulesRows.push(newRow);
     if(!usingDemoDataRules){
-      try{ await fetch(`${CONFIG.API_BASE}/rorules`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rorules`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3387,7 +3387,7 @@ async function deleteRuleRow(id){
   if(!confirm('Delete this rule? This can\'t be undone.')) return;
   roRulesRows = roRulesRows.filter(r => r.id !== id);
   if(!usingDemoDataRules){
-    try{ await fetch(`${CONFIG.API_BASE}/rorules/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/rorules/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3551,13 +3551,13 @@ async function saveOrgRow(){
   if(editingId){
     Object.assign(orgRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataOrg){
-      try{ await fetch(`${CONFIG.API_BASE}/org/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/org/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (orgRows.at(-1)?.sort_order || 0) + 10, ...payload };
     orgRows.push(newRow);
     if(!usingDemoDataOrg){
-      try{ await fetch(`${CONFIG.API_BASE}/org`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/org`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3569,7 +3569,7 @@ async function deleteOrgRow(id){
   orgRows = orgRows.filter(r => r.id !== id);
   orgRows.forEach(r => { if(r.reports_to === id) r.reports_to = null; });
   if(!usingDemoDataOrg){
-    try{ await fetch(`${CONFIG.API_BASE}/org/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/org/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3629,13 +3629,13 @@ async function saveRotationPatternRow(){
   if(editingId){
     Object.assign(rotationPatternRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataRotationPattern){
-      try{ await fetch(`${CONFIG.API_BASE}/rotationpattern/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rotationpattern/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (rotationPatternRows.at(-1)?.sort_order || 0) + 10, ...payload };
     rotationPatternRows.push(newRow);
     if(!usingDemoDataRotationPattern){
-      try{ await fetch(`${CONFIG.API_BASE}/rotationpattern`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rotationpattern`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3646,7 +3646,7 @@ async function deleteRotationPatternRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   rotationPatternRows = rotationPatternRows.filter(r => r.id !== id);
   if(!usingDemoDataRotationPattern){
-    try{ await fetch(`${CONFIG.API_BASE}/rotationpattern/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/rotationpattern/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3663,13 +3663,13 @@ async function saveRotationAnchor(){
   if(rotationAnchorRows[0]){
     Object.assign(rotationAnchorRows[0], payload);
     if(!usingDemoDataRotationAnchor){
-      try{ await fetch(`${CONFIG.API_BASE}/rotationanchor/${rotationAnchorRows[0].id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rotationanchor/${rotationAnchorRows[0].id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), ...payload };
     rotationAnchorRows.push(newRow);
     if(!usingDemoDataRotationAnchor){
-      try{ await fetch(`${CONFIG.API_BASE}/rotationanchor`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/rotationanchor`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   render();
@@ -3735,13 +3735,13 @@ async function saveLaborRateRow(){
   if(editingId){
     Object.assign(laborRateRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataLaborRates){
-      try{ await fetch(`${CONFIG.API_BASE}/laborrates/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/laborrates/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (laborRateRows.at(-1)?.sort_order || 0) + 10, ...payload };
     laborRateRows.push(newRow);
     if(!usingDemoDataLaborRates){
-      try{ await fetch(`${CONFIG.API_BASE}/laborrates`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/laborrates`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3752,7 +3752,7 @@ async function deleteLaborRateRow(id){
   if(!confirm('Delete this rate? This can\'t be undone.')) return;
   laborRateRows = laborRateRows.filter(r => r.id !== id);
   if(!usingDemoDataLaborRates){
-    try{ await fetch(`${CONFIG.API_BASE}/laborrates/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/laborrates/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3846,13 +3846,13 @@ async function saveWarrantyRow(){
   if(editingId){
     Object.assign(warrantyCompanyRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataWarranty){
-      try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/warrantycompanies/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (warrantyCompanyRows.at(-1)?.sort_order || 0) + 10, ...payload };
     warrantyCompanyRows.push(newRow);
     if(!usingDemoDataWarranty){
-      try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/warrantycompanies`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -3863,7 +3863,7 @@ async function deleteWarrantyRow(id){
   if(!confirm('Delete this warranty company? This can\'t be undone.')) return;
   warrantyCompanyRows = warrantyCompanyRows.filter(r => r.id !== id);
   if(!usingDemoDataWarranty){
-    try{ await fetch(`${CONFIG.API_BASE}/warrantycompanies/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/warrantycompanies/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -3995,13 +3995,13 @@ async function saveRow(){
   if(editingId){
     Object.assign(pricingRows.find(r => r.id === editingId), payload);
     if(!usingDemoData){
-      try{ await fetch(`${CONFIG.API_BASE}/pricing/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/pricing/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (pricingRows.at(-1)?.sort_order || 0) + 10, ...payload };
     pricingRows.push(newRow);
     if(!usingDemoData){
-      try{ await fetch(`${CONFIG.API_BASE}/pricing`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/pricing`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -4012,7 +4012,7 @@ async function deleteRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   pricingRows = pricingRows.filter(r => r.id !== id);
   if(!usingDemoData){
-    try{ await fetch(`${CONFIG.API_BASE}/pricing/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/pricing/${id}`, {method:'DELETE'});
   }
   render();
 }
@@ -4033,13 +4033,13 @@ async function saveMMRow(){
   if(editingId){
     Object.assign(mmRows.find(r => r.id === editingId), payload);
     if(!usingDemoDataMM){
-      try{ await fetch(`${CONFIG.API_BASE}/mmcodes/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/mmcodes/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
     const newRow = { id: 'local-' + Date.now(), sort_order: (mmRows.at(-1)?.sort_order || 0) + 10, ...payload };
     mmRows.push(newRow);
     if(!usingDemoDataMM){
-      try{ await fetch(`${CONFIG.API_BASE}/mmcodes`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)}); }catch(e){}
+      await apiWrite(`${CONFIG.API_BASE}/mmcodes`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
     }
   }
   closeModal();
@@ -4050,13 +4050,38 @@ async function deleteMMRow(id){
   if(!confirm('Delete this row? This can\'t be undone.')) return;
   mmRows = mmRows.filter(r => r.id !== id);
   if(!usingDemoDataMM){
-    try{ await fetch(`${CONFIG.API_BASE}/mmcodes/${id}`, {method:'DELETE'}); }catch(e){}
+    await apiWrite(`${CONFIG.API_BASE}/mmcodes/${id}`, {method:'DELETE'});
   }
   render();
 }
 
 function type_or_null(v){ v = (v||'').trim(); return v === '' ? null : v; }
 function numOrNull(v){ return v === '' || v === null || v === undefined ? null : Number(v); }
+
+// Every Settings save/delete routes its write through here instead of a bare
+// fetch(). If the request fails — network error, or the server rejects it —
+// this shows a clear alert and re-throws, which stops the calling function
+// before it closes the modal or re-renders. That matters: without this, a
+// failed save used to look identical to a successful one (the on-screen list
+// updates from local state regardless), so data could silently vanish the
+// next time the page reloaded from the server. Now a failure is loud and the
+// modal stays open with your entered data intact so you can retry.
+async function apiWrite(url, options){
+  let res;
+  try{
+    res = await fetch(url, options);
+  }catch(networkErr){
+    alert('Could not reach the server — this change was NOT saved.\n\nCheck your connection and try again.\n\n(' + (networkErr.message || networkErr) + ')');
+    throw networkErr;
+  }
+  if(!res.ok){
+    let detail = '';
+    try{ detail = await res.text(); }catch(e){}
+    alert('The server rejected this change — it was NOT saved.\n\nError ' + res.status + (detail ? ':\n' + detail.slice(0, 300) : '') + '\n\nPlease try again.');
+    throw new Error('Save failed: ' + res.status);
+  }
+  return res;
+}
 function escapeHtml(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s); }
 
