@@ -438,6 +438,7 @@ const PAGES = [
   { id:'pricing',   label:'Pricing Guide',            icon:'tag',      ready:true  },
   { id:'mmcodes',   label:'Maintenance Minder Codes',  icon:'checklist',ready:true  },
   { id:'vendors',   label:'Vendors',                   icon:'truck',    ready:true  },
+  { id:'rentals',   label:'Rentals',                   icon:'car',      ready:true  },
   { id:'oilguide',  label:'Oil Application Guide',     icon:'droplet',  ready:true  },
   { id:'process',   label:'Process Flow Chart',        icon:'flow',     ready:true  },
   { id:'orgchart',  label:'Org Chart',                 icon:'sitemap',  ready:true  },
@@ -454,7 +455,8 @@ const ICONS = {
   flow: '<circle cx="5" cy="6" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M7 6h5a3 3 0 0 1 3 3v0M7 18h5a3 3 0 0 0 3-3v0"/>',
   sitemap: '<rect x="9" y="3" width="6" height="4.2" rx=".7"/><rect x="2.5" y="16.8" width="6" height="4.2" rx=".7"/><rect x="9" y="16.8" width="6" height="4.2" rx=".7"/><rect x="15.5" y="16.8" width="6" height="4.2" rx=".7"/><path d="M12 7.2v4M5.5 16.8v-3h13v3"/>',
   calendar: '<rect x="3" y="4.5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M7.5 3v3M16.5 3v3"/>',
-  gear: '<circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/>'
+  gear: '<circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/>',
+  car: '<path d="M4 16v-3.5l1.8-4.2a2 2 0 0 1 1.85-1.2h8.7a2 2 0 0 1 1.85 1.2L20 12.5V16"/><rect x="3" y="16" width="18" height="3.2" rx="1"/><circle cx="7.5" cy="16" r="1.7"/><circle cx="16.5" cy="16" r="1.7"/><path d="M4 12.5h16"/>'
 };
 function icon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||''}</svg>`; }
 
@@ -464,6 +466,8 @@ let usingDemoDataLaborRates = false;
 let usingDemoDataMM = false;
 let usingDemoDataVendors = false;
 let usingDemoDataWarranty = false;
+let usingDemoDataRentalRates = false;
+let usingDemoDataRentalRules = false;
 let usingDemoDataOilGuide = false;
 let usingDemoDataOtherFluids = false;
 let usingDemoDataFluidParts = false;
@@ -480,6 +484,8 @@ let laborRateRows = [];
 let mmRows = [];
 let vendorRows = [];
 let warrantyCompanyRows = [];
+let rentalRateRows = [];
+let rentalRuleRows = [];
 let engineOilRows = [];
 let otherFluidsRows = [];
 let fluidPartsRows = [];
@@ -500,6 +506,7 @@ let editingSubprocessId = null;
 let settingsTab = 'pricing';
 let pricingSettingsSubTab = 'pricing';
 let vendorSettingsSubTab = 'vendors';
+let rentalSettingsSubTab = 'rates';
 let oilSettingsSubTab = 'engine';
 let orgSettingsSubTab = 'roster';
 let processSettingsSubTab = 'lifecycle';
@@ -609,6 +616,32 @@ async function loadWarrantyCompanies(){
     usingDemoDataWarranty = true;
   }
   warrantyCompanyRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadRentalRates(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/rentalrates`);
+    if(!res.ok) throw new Error('bad response');
+    rentalRateRows = await res.json();
+    usingDemoDataRentalRates = false;
+  }catch(err){
+    rentalRateRows = JSON.parse(JSON.stringify(SEED_DATA_RENTALRATES));
+    usingDemoDataRentalRates = true;
+  }
+  rentalRateRows.sort((a,b) => a.sort_order - b.sort_order);
+}
+
+async function loadRentalRules(){
+  try{
+    const res = await fetch(`${CONFIG.API_BASE}/rentalrules`);
+    if(!res.ok) throw new Error('bad response');
+    rentalRuleRows = await res.json();
+    usingDemoDataRentalRules = false;
+  }catch(err){
+    rentalRuleRows = JSON.parse(JSON.stringify(SEED_DATA_RENTALRULES));
+    usingDemoDataRentalRules = true;
+  }
+  rentalRuleRows.sort((a,b) => a.sort_order - b.sort_order);
 }
 
 async function loadEngineOil(){
@@ -836,6 +869,8 @@ const TABLE_ACTIONS = {
   mmcodes:      { edit: 'openMMEdit',         delete: 'deleteMMRow' },
   vendor:       { edit: 'openVendorEdit',     delete: 'deleteVendorRow' },
   warranty:     { edit: 'openWarrantyEdit',   delete: 'deleteWarrantyRow' },
+  rentalrates:  { edit: 'openRentalRateEdit', delete: 'deleteRentalRateRow' },
+  rentalrules:  { edit: 'openRentalRuleEdit', delete: 'deleteRentalRuleRow' },
   oilguide:     { edit: 'openOilEdit',        delete: 'deleteOilRow' },
   otherfluids:  { edit: 'openOtherFluidEdit', delete: 'deleteOtherFluidRow' },
   fluidparts:   { edit: 'openFluidPartEdit',  delete: 'deleteFluidPartRow' },
@@ -1093,6 +1128,43 @@ function renderVendorsPage(){
   `;
 }
 
+function rentalRatesHTML(){
+  const cards = rentalRateRows.map(r => `<div class="rate-card">
+    <div class="rate-amount">${fmtMoney(r.rate_amount)}<span class="rate-per-hr">/${escapeHtml((r.rate_unit || 'day').replace('per ', ''))}</span></div>
+    <div class="rate-name">${escapeHtml(r.rate_name)}</div>
+    ${r.notes ? `<div class="rate-note">${escapeHtml(r.notes)}</div>` : ''}
+  </div>`).join('');
+  return `<div class="rate-cards">${cards || `<div class="empty-hint">No rates yet.</div>`}</div>`;
+}
+
+function rentalRulesHTML(){
+  if(!rentalRuleRows.length){
+    return `<div class="table-wrap"><div class="empty-hint">No rules added yet.</div></div>`;
+  }
+  return `<div class="rules-list">${rentalRuleRows.map((r,i) => `
+    <div class="rule-card">
+      <div class="rule-number">${i+1}</div>
+      <div class="rule-text">${escapeHtml(r.rule_text)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderRentalsPage(){
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Rentals</h2>
+        <div class="desc">Rental car rates and eligibility rules.</div>
+      </div>
+    </div>
+    ${demoBanner(usingDemoDataRentalRates, 'rentalrates')}
+    <div class="section-label">Rates</div>
+    ${rentalRatesHTML()}
+    <div class="section-label">Rules</div>
+    ${demoBanner(usingDemoDataRentalRules, 'rentalrules')}
+    ${rentalRulesHTML()}
+  `;
+}
+
 function switchVendorSettingsSubTab(tab){
   vendorSettingsSubTab = tab;
   render();
@@ -1122,6 +1194,59 @@ function renderVendorsSettings(){
     ${isVendors
       ? demoBanner(usingDemoDataVendors, 'vendors') + (vendorRows.map(v => vendorCardHTML(v, true)).join('') || `<div class="table-wrap"><div class="empty-hint">No vendors yet. Add the first one.</div></div>`)
       : demoBanner(usingDemoDataWarranty, 'warrantycompanies') + warrantyCompaniesSettingsListHTML()}
+  `;
+}
+
+function switchRentalSettingsSubTab(tab){
+  rentalSettingsSubTab = tab;
+  render();
+}
+
+function rentalRatesSettingsTableHTML(){
+  const rowsHtml = rentalRateRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.rate_name)}</td>
+    <td class="num total">${fmtMoney(r.rate_amount)}</td>
+    <td>${escapeHtml(r.rate_unit)}</td>
+    <td>${r.notes ? escapeHtml(r.notes) : ''}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'rentalrates')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Rate name</th><th class="num" style="width:100px">Amount</th><th style="width:90px">Unit</th><th>Notes</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="5" class="empty-hint">No rates yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function rentalRulesSettingsTableHTML(){
+  const rowsHtml = rentalRuleRows.map(r => `<tr class="row-item">
+    <td>${escapeHtml(r.rule_text)}</td>
+    <td class="actions-cell">${actionButtons(r.id, 'rentalrules')}</td>
+  </tr>`).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Rule</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <tbody>${rowsHtml || `<tr><td colspan="2" class="empty-hint">No rules yet.</td></tr>`}</tbody>
+  </table></div>`;
+}
+
+function renderRentalsSettings(){
+  const isRates = rentalSettingsSubTab !== 'rules';
+  return `
+    <div class="topbar">
+      <div>
+        <h2>Settings</h2>
+        <div class="desc">Add, edit, or remove entries for each page. More pages will get their own tab here as they're built.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="${isRates ? 'openRentalRateAdd' : 'openRentalRuleAdd'}()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg> Add ${isRates ? 'rate' : 'rule'}</button>
+      </div>
+    </div>
+    ${settingsTabsHTML()}
+    <div class="settings-tabs settings-tabs-sub">
+      <button class="settings-tab${isRates ? ' active' : ''}" onclick="switchRentalSettingsSubTab('rates')">Rates</button>
+      <button class="settings-tab${!isRates ? ' active' : ''}" onclick="switchRentalSettingsSubTab('rules')">Rules</button>
+    </div>
+    ${isRates
+      ? demoBanner(usingDemoDataRentalRates, 'rentalrates') + rentalRatesSettingsTableHTML()
+      : demoBanner(usingDemoDataRentalRules, 'rentalrules') + rentalRulesSettingsTableHTML()}
   `;
 }
 
@@ -1643,6 +1768,7 @@ const SETTINGS_TABLE_META = {
   pricing: { label: 'Pricing Guide' },
   mmcodes: { label: 'Maintenance Minder Codes' },
   vendors: { label: 'Vendors' },
+  rentals: { label: 'Rentals' },
   oilguide: { label: 'Oil Application Guide' },
   process: { label: 'Process Flow Chart' },
   orgchart: { label: 'Org Chart' },
@@ -1676,6 +1802,9 @@ function renderSettingsPage(){
   }
   if(settingsTab === 'vendors'){
     return renderVendorsSettings();
+  }
+  if(settingsTab === 'rentals'){
+    return renderRentalsSettings();
   }
   if(settingsTab === 'oilguide'){
     return renderOilGuideSettings();
@@ -2131,6 +2260,10 @@ async function render(){
     if(vendorRows.length === 0) await loadVendors();
     if(warrantyCompanyRows.length === 0) await loadWarrantyCompanies();
     main.innerHTML = renderVendorsPage();
+  } else if(currentPage === 'rentals'){
+    if(rentalRateRows.length === 0) await loadRentalRates();
+    if(rentalRuleRows.length === 0) await loadRentalRules();
+    main.innerHTML = renderRentalsPage();
   } else if(currentPage === 'oilguide'){
     if(engineOilRows.length === 0) await loadEngineOil();
     if(fluidPartsRows.length === 0) await loadFluidParts();
@@ -2157,6 +2290,8 @@ async function render(){
     if(mmRows.length === 0) await loadMMCodes();
     if(vendorRows.length === 0) await loadVendors();
     if(warrantyCompanyRows.length === 0) await loadWarrantyCompanies();
+    if(rentalRateRows.length === 0) await loadRentalRates();
+    if(rentalRuleRows.length === 0) await loadRentalRules();
     if(engineOilRows.length === 0) await loadEngineOil();
     if(fluidPartsRows.length === 0) await loadFluidParts();
     if(otherFluidsRows.length === 0) await loadOtherFluids();
@@ -2416,6 +2551,8 @@ function handleModalSave(){
   else if(editingTable === 'org') saveOrgRow();
   else if(editingTable === 'rotationpattern') saveRotationPatternRow();
   else if(editingTable === 'laborrates') saveLaborRateRow();
+  else if(editingTable === 'rentalrates') saveRentalRateRow();
+  else if(editingTable === 'rentalrules') saveRentalRuleRow();
   else saveRow();
 }
 
@@ -3899,6 +4036,163 @@ async function deleteWarrantyRow(id){
   render();
 }
 
+/* ---------- Rental Rates CRUD ---------- */
+function emptyRentalRate(){
+  return { rate_name:'', rate_amount:'', rate_unit:'per day', notes:'' };
+}
+
+function openRentalRateAdd(){
+  editingId = null;
+  editingTable = 'rentalrates';
+  document.getElementById('modalTitle').textContent = 'Add rental rate';
+  document.getElementById('modalBody').innerHTML = rentalRateModalFormHTML(emptyRentalRate());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openRentalRateEdit(id){
+  const row = rentalRateRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'rentalrates';
+  document.getElementById('modalTitle').textContent = 'Edit rental rate';
+  document.getElementById('modalBody').innerHTML = rentalRateModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function rentalRateModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Rate name</label>
+        <input type="text" id="rr_rate_name" value="${escapeAttr(r.rate_name)}" placeholder="e.g. Customer Pay — Car">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" step="0.01" id="rr_rate_amount" value="${r.rate_amount ?? ''}">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <input type="text" id="rr_rate_unit" value="${escapeAttr(r.rate_unit || 'per day')}" placeholder="e.g. per day">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field full">
+        <label>Notes</label>
+        <input type="text" id="rr_notes" value="${escapeAttr(r.notes)}" placeholder="Optional">
+      </div>
+    </div>
+  `;
+}
+
+async function saveRentalRateRow(){
+  const payload = {
+    rate_name: document.getElementById('rr_rate_name').value.trim(),
+    rate_amount: numOrNull(document.getElementById('rr_rate_amount').value),
+    rate_unit: document.getElementById('rr_rate_unit').value.trim() || 'per day',
+    notes: type_or_null(document.getElementById('rr_notes').value),
+  };
+  if(!payload.rate_name || payload.rate_amount === null){
+    alert('Rate name and amount are required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(rentalRateRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataRentalRates){
+      await apiWrite(`${CONFIG.API_BASE}/rentalrates/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    }
+  } else {
+    const draft = { sort_order: (rentalRateRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataRentalRates){
+      rentalRateRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/rentalrates`, draft);
+      rentalRateRows.push(saved);
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteRentalRateRow(id){
+  if(!confirm('Delete this rate? This can\'t be undone.')) return;
+  rentalRateRows = rentalRateRows.filter(r => r.id !== id);
+  if(!usingDemoDataRentalRates){
+    await apiWrite(`${CONFIG.API_BASE}/rentalrates/${id}`, {method:'DELETE'});
+  }
+  render();
+}
+
+/* ---------- Rental Rules CRUD ---------- */
+function emptyRentalRule(){
+  return { rule_text:'' };
+}
+
+function openRentalRuleAdd(){
+  editingId = null;
+  editingTable = 'rentalrules';
+  document.getElementById('modalTitle').textContent = 'Add rule';
+  document.getElementById('modalBody').innerHTML = rentalRuleModalFormHTML(emptyRentalRule());
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openRentalRuleEdit(id){
+  const row = rentalRuleRows.find(r => r.id === id);
+  if(!row) return;
+  editingId = id;
+  editingTable = 'rentalrules';
+  document.getElementById('modalTitle').textContent = 'Edit rule';
+  document.getElementById('modalBody').innerHTML = rentalRuleModalFormHTML(row);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function rentalRuleModalFormHTML(r){
+  return `
+    <div class="field-row">
+      <div class="field full">
+        <label>Rule</label>
+        <textarea id="rru_rule_text" placeholder="e.g. All renters must be at least 21 years old...">${escapeHtml(r.rule_text||'')}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+async function saveRentalRuleRow(){
+  const payload = { rule_text: document.getElementById('rru_rule_text').value.trim() };
+  if(!payload.rule_text){
+    alert('Rule text is required.');
+    return;
+  }
+
+  if(editingId){
+    Object.assign(rentalRuleRows.find(r => r.id === editingId), payload);
+    if(!usingDemoDataRentalRules){
+      await apiWrite(`${CONFIG.API_BASE}/rentalrules/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    }
+  } else {
+    const draft = { sort_order: (rentalRuleRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataRentalRules){
+      rentalRuleRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/rentalrules`, draft);
+      rentalRuleRows.push(saved);
+    }
+  }
+  closeModal();
+  render();
+}
+
+async function deleteRentalRuleRow(id){
+  if(!confirm('Delete this rule? This can\'t be undone.')) return;
+  rentalRuleRows = rentalRuleRows.filter(r => r.id !== id);
+  if(!usingDemoDataRentalRules){
+    await apiWrite(`${CONFIG.API_BASE}/rentalrules/${id}`, {method:'DELETE'});
+  }
+  render();
+}
+
 function modalFormHTML(r){
   return `
     <div class="field-row">
@@ -4146,6 +4440,8 @@ const SEED_DATA_MM = [{"id": "mmseed-10", "sort_order": 10, "code_type": "main",
 
 const SEED_DATA_VENDORS = [{"id": "vseed-10", "sort_order": 10, "name": null, "phone": null, "lead_time": null, "notes": null, "vendor_services": [{"id": "vsseed-10", "vendor_id": "vseed-10", "sort_order": 10, "service": "Full Vehicle Detail", "cost": 210.0, "customer_price": 262.5}, {"id": "vsseed-20", "vendor_id": "vseed-10", "sort_order": 20, "service": "Interior Only Detail", "cost": 120.0, "customer_price": 150.0}, {"id": "vsseed-30", "vendor_id": "vseed-10", "sort_order": 30, "service": "Exterior Only Detail", "cost": 120.0, "customer_price": 150.0}]}, {"id": "vseed-20", "sort_order": 20, "name": null, "phone": "360-557-8016", "lead_time": "2 day lead time", "notes": null, "vendor_services": [{"id": "vsseed-40", "vendor_id": "vseed-20", "sort_order": 10, "service": "Glass Installation", "cost": 159.0, "customer_price": 198.75}, {"id": "vsseed-50", "vendor_id": "vseed-20", "sort_order": 20, "service": "Pre-collision System Calibration", "cost": 252.75, "customer_price": 315.94}]}];
 const SEED_DATA_WARRANTY = [];
+const SEED_DATA_RENTALRATES = [{"id": "rrateseed-10", "sort_order": 10, "rate_name": "Customer Pay \u2014 Car", "rate_amount": 35.0, "rate_unit": "per day", "notes": null}, {"id": "rrateseed-20", "sort_order": 20, "rate_name": "Customer Pay \u2014 SUV", "rate_amount": 42.0, "rate_unit": "per day", "notes": null}, {"id": "rrateseed-30", "sort_order": 30, "rate_name": "Warranty Rental", "rate_amount": 52.0, "rate_unit": "per day", "notes": "Requires American Honda approval"}];
+const SEED_DATA_RENTALRULES = [{"id": "rruleseed-10", "sort_order": 10, "rule_text": "Customer Pay Rentals are only available to customers who have a vehicle in the service department for repairs \u2014 we do not rent to the public."}, {"id": "rruleseed-20", "sort_order": 20, "rule_text": "Warranty Rentals require American Honda approval. Approval can be requested once a technician has diagnosed the vehicle and a timeline for the repair has been established."}, {"id": "rruleseed-30", "sort_order": 30, "rule_text": "All renters must be at least 21 years old with a valid driver's license and current full coverage insurance \u2014 no exceptions."}];
 
 const SEED_DATA_OILGUIDE = [{"id": "oilseed-10", "sort_order": 10, "model": "Accord L4 & V6", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-20", "sort_order": 20, "model": "Accord L4 & V6", "year_start": 2001, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-30", "sort_order": 30, "model": "Accord L4 & V6", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-40", "sort_order": 40, "model": "Accord Hybrid", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-50", "sort_order": 50, "model": "Civic", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": "5W-20", "alt_year_start": 1999, "alt_year_end": 2000, "verified": true}, {"id": "oilseed-60", "sort_order": 60, "model": "Civic", "year_start": 2001, "year_end": 2010, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2003, "alt_year_end": 2010, "verified": true}, {"id": "oilseed-70", "sort_order": 70, "model": "Civic", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-80", "sort_order": 80, "model": "Civic GX", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-90", "sort_order": 90, "model": "Civic GX", "year_start": 2002, "year_end": 2013, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-100", "sort_order": 100, "model": "Civic Hybrid", "year_start": 2006, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-110", "sort_order": 110, "model": "Civic Si", "year_start": 1999, "year_end": 2000, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-120", "sort_order": 120, "model": "Civic Si", "year_start": 2001, "year_end": 2004, "oil_weight": "5W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-130", "sort_order": 130, "model": "Civic Si", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-140", "sort_order": 140, "model": "Civic Si", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-150", "sort_order": 150, "model": "Crosstour", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-160", "sort_order": 160, "model": "CR-V", "year_start": 1999, "year_end": 2001, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-170", "sort_order": 170, "model": "CR-V", "year_start": 2002, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-180", "sort_order": 180, "model": "CR-V", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-190", "sort_order": 190, "model": "CR-Z", "year_start": 2011, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-200", "sort_order": 200, "model": "Element", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-210", "sort_order": 210, "model": "Element", "year_start": 2010, "year_end": 2011, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-220", "sort_order": 220, "model": "Fit", "year_start": 2007, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2008, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-230", "sort_order": 230, "model": "Fit", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-240", "sort_order": 240, "model": "Insight", "year_start": 2000, "year_end": 2006, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-250", "sort_order": 250, "model": "Insight", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-260", "sort_order": 260, "model": "Odyssey", "year_start": 1999, "year_end": 2004, "oil_weight": "5W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-270", "sort_order": 270, "model": "Odyssey", "year_start": 2005, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-280", "sort_order": 280, "model": "Odyssey", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-290", "sort_order": 290, "model": "Pilot", "year_start": 2003, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2005, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-300", "sort_order": 300, "model": "Pilot", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-310", "sort_order": 310, "model": "Ridgeline", "year_start": 2006, "year_end": 2009, "oil_weight": "5W-20", "alt_weight": "0W-20", "alt_year_start": 2006, "alt_year_end": 2009, "verified": true}, {"id": "oilseed-320", "sort_order": 320, "model": "Ridgeline", "year_start": 2010, "year_end": 2013, "oil_weight": "0W-20", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}, {"id": "oilseed-330", "sort_order": 330, "model": "S2000", "year_start": 1999, "year_end": 2009, "oil_weight": "10W-30", "alt_weight": null, "alt_year_start": null, "alt_year_end": null, "verified": true}];
 const SEED_DATA_FLUIDPARTS = [{"id": "fpseed-10", "sort_order": 10, "fluid_name": "ATF-DW1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9008", "color_hex": "#1E6FD9", "notes": null, "verified": true}, {"id": "fpseed-20", "sort_order": 20, "fluid_name": "ATF-Type 2.0", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9015*", "color_hex": "#E8C93A", "notes": null, "verified": true}, {"id": "fpseed-30", "sort_order": 30, "fluid_name": "ATF-Type 3.1", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9017", "color_hex": "#C23A8B", "notes": null, "verified": true}, {"id": "fpseed-40", "sort_order": 40, "fluid_name": "CVT Fluid", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-9006", "color_hex": "#4C6B2F", "notes": null, "verified": true}, {"id": "fpseed-50", "sort_order": 50, "fluid_name": "HCF-2", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08200-HCF2", "color_hex": "#D9A61E", "notes": null, "verified": true}, {"id": "fpseed-60", "sort_order": 60, "fluid_name": "MTF", "fluid_category": "Transmission Fluid", "container": "Quart", "part_number": "08798-9031", "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-70", "sort_order": 70, "fluid_name": "Dual Pump Fluid (DPSF II)", "fluid_category": "Rear Differential", "container": "Quart", "part_number": "08200-9007", "color_hex": "#C1622A", "notes": null, "verified": true}, {"id": "fpseed-80", "sort_order": 80, "fluid_name": "VTM-4", "fluid_category": "Rear Differential", "container": "Gallon", "part_number": "08200-9014**", "color_hex": "#7FB6D9", "notes": null, "verified": true}, {"id": "fpseed-90", "sort_order": 90, "fluid_name": "HGO-1", "fluid_category": "Transfer Assembly Fluid", "container": "Quart", "part_number": null, "color_hex": "#9C9284", "notes": null, "verified": true}, {"id": "fpseed-100", "sort_order": 100, "fluid_name": "Antifreeze/Coolant Type 2", "fluid_category": "Antifreeze/Coolant", "container": "Gallon", "part_number": "01999-9011", "color_hex": "#4F9B3E", "notes": null, "verified": true}, {"id": "fpseed-110", "sort_order": 110, "fluid_name": "DOT-3", "fluid_category": "Brake Fluid", "container": "12 fl oz", "part_number": "08798-9008", "color_hex": "#3A2E8C", "notes": null, "verified": true}, {"id": "fpseed-120", "sort_order": 120, "fluid_name": "Power Steering Fluid", "fluid_category": "Power Steering Fluid", "container": "12 fl oz", "part_number": "08206-9002", "color_hex": "#C0392B", "notes": null, "verified": true}, {"id": "fpseed-130", "sort_order": 130, "fluid_name": "Washer Concentrate/Antifreeze", "fluid_category": "Windshield Washer", "container": "16 fl oz", "part_number": "08798-9025", "color_hex": "#B3A6D9", "notes": null, "verified": true}];
