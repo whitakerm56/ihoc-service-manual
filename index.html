@@ -220,19 +220,16 @@
   .board-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
   .board-legend-dot{width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;}
   .flow-chart-wrap{overflow-x:auto; padding-bottom:12px; margin-bottom:30px;}
-  .flow-lanes{display:flex; flex-direction:column; gap:16px; min-width:max-content;}
-  .flow-lane{display:flex; align-items:center; gap:16px;}
-  .flow-lane-label{
-    flex-shrink:0; width:130px; text-align:center; padding:10px 10px; border-radius:8px;
-    font-family:var(--display); font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; color:#191A1C;
-  }
-  .flow-lane-steps{display:flex; align-items:center; gap:6px;}
+  table.flowgrid{border-collapse:separate; border-spacing:0; min-width:max-content;}
+  .flowgrid-role-col{position:sticky; left:0; background:var(--card); width:150px; min-width:150px; text-align:left; z-index:1; padding:10px 12px;}
+  thead .flowgrid-role-col{background:#1A1B1D; z-index:2;}
+  .flowgrid-step-col{width:160px; min-width:160px; text-align:center; font-family:var(--mono); font-size:12px; color:var(--ink-faint); padding:8px 6px;}
+  td.flowgrid-cell{vertical-align:top; padding:6px; border-bottom:1px solid var(--border); border-left:1px solid var(--border); background:#17181A;}
+  td.flowgrid-cell-empty{background:transparent;}
   .flow-step{
     background:#1E2023; border:1px solid var(--border-strong); border-left:3px solid; border-radius:6px;
-    padding:9px 12px; font-size:12px; line-height:1.4; color:var(--ink); width:190px; flex-shrink:0;
+    padding:9px 11px; font-size:11.5px; line-height:1.4; color:var(--ink);
   }
-  .flow-lane-arrow{width:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--ink-faint);}
-  .flow-lane-arrow svg{width:16px; height:16px;}
   .role-badge{
     display:inline-block; font-family:var(--display); font-weight:700; font-size:11.5px; padding:5px 12px;
     border-radius:6px; text-transform:uppercase; letter-spacing:.03em; color:#191A1C;
@@ -1294,25 +1291,35 @@ const ROLE_COLORS = {
 function roleColor(role){ return ROLE_COLORS[role] || '#8B8D93'; }
 
 function flowChartHTML(){
-  const byRole = {};
+  const stepNumbers = [];
+  lifecycleRows.forEach(r => { if(r.step_number != null && !stepNumbers.includes(r.step_number)) stepNumbers.push(r.step_number); });
+  stepNumbers.sort((a,b) => a - b);
+
+  const byRoleStep = {};
   lifecycleRows.forEach(r => {
-    if(!byRole[r.role]) byRole[r.role] = [];
-    byRole[r.role].push(r);
+    const key = r.role + '|' + r.step_number;
+    byRoleStep[key] = r;
   });
-  const rolesPresent = ROLE_ORDER.filter(role => byRole[role] && byRole[role].length);
 
-  const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>`;
+  const rolesPresent = ROLE_ORDER.filter(role => lifecycleRows.some(r => r.role === role));
 
-  const lanesHtml = rolesPresent.map(role => {
-    const steps = byRole[role];
-    const stepsHtml = steps.map((s, i) => `${i > 0 ? `<div class="flow-lane-arrow">${arrowSvg}</div>` : ''}<div class="flow-step" style="border-left-color:${roleColor(role)}">${escapeHtml(s.step_text)}</div>`).join('');
-    return `<div class="flow-lane">
-      <div class="flow-lane-label" style="background:${roleColor(role)}">${escapeHtml(role)}</div>
-      <div class="flow-lane-steps">${stepsHtml}</div>
-    </div>`;
+  const headerCells = stepNumbers.map(n => `<th class="flowgrid-step-col">${n}</th>`).join('');
+  const bodyRows = rolesPresent.map(role => {
+    const cells = stepNumbers.map(n => {
+      const r = byRoleStep[role + '|' + n];
+      if(!r) return `<td class="flowgrid-cell flowgrid-cell-empty"></td>`;
+      return `<td class="flowgrid-cell"><div class="flow-step" style="border-left-color:${roleColor(role)}">${escapeHtml(r.step_text)}</div></td>`;
+    }).join('');
+    return `<tr>
+      <td class="flowgrid-role-col"><span class="role-badge" style="background:${roleColor(role)}">${escapeHtml(role)}</span></td>
+      ${cells}
+    </tr>`;
   }).join('');
 
-  return `<div class="flow-chart-wrap"><div class="flow-lanes">${lanesHtml || `<div class="empty-hint">No lifecycle steps yet.</div>`}</div></div>`;
+  return `<div class="flow-chart-wrap"><table class="flowgrid">
+    <thead><tr><th class="flowgrid-role-col">Role</th>${headerCells}</tr></thead>
+    <tbody>${bodyRows || `<tr><td colspan="${stepNumbers.length+1}" class="empty-hint">No lifecycle steps yet.</td></tr>`}</tbody>
+  </table></div>`;
 }
 
 function subprocessTrackerHTML(sp){
@@ -1867,13 +1874,13 @@ function switchProcessSettingsSubTab(tab){
 
 function lifecycleSettingsTableHTML(){
   const rowsHtml = lifecycleRows.map(r => `<tr class="row-item">
-    <td>${escapeHtml(r.phase)}</td>
+    <td class="mono">${r.step_number != null ? r.step_number : ''}</td>
     <td><span class="role-badge" style="background:${roleColor(r.role)}">${escapeHtml(r.role)}</span></td>
     <td>${escapeHtml(r.step_text)}</td>
     <td class="actions-cell">${actionButtons(r.id, 'lifecycle')}</td>
   </tr>`).join('');
   return `<div class="table-wrap"><table>
-    <thead><tr><th style="width:180px">Phase</th><th style="width:120px">Role</th><th>Step</th><th class="num" style="width:90px">Actions</th></tr></thead>
+    <thead><tr><th style="width:80px">Step #</th><th style="width:120px">Role</th><th>Step</th><th class="num" style="width:90px">Actions</th></tr></thead>
     <tbody>${rowsHtml || `<tr><td colspan="4" class="empty-hint">No rows yet.</td></tr>`}</tbody>
   </table></div>`;
 }
@@ -3092,7 +3099,7 @@ async function deleteHuntGroupRow(id){
 
 /* ---------- Life Cycle Steps CRUD ---------- */
 function emptyLifecycleRow(){
-  return { phase:'', role: ROLE_ORDER[0], step_text:'' };
+  return { step_number:'', role: ROLE_ORDER[0], step_text:'' };
 }
 
 function openLifecycleAdd(){
@@ -3118,8 +3125,8 @@ function lifecycleModalFormHTML(r){
   return `
     <div class="field-row">
       <div class="field">
-        <label>Phase</label>
-        <input type="text" id="lc_phase" value="${escapeAttr(r.phase)}" placeholder="e.g. Intake & Scheduling">
+        <label>Step number</label>
+        <input type="number" id="lc_step_number" value="${r.step_number ?? ''}" placeholder="e.g. 4" min="1" step="1">
       </div>
       <div class="field">
         <label>Role</label>
@@ -3137,12 +3144,12 @@ function lifecycleModalFormHTML(r){
 
 async function saveLifecycleRow(){
   const payload = {
-    phase: document.getElementById('lc_phase').value.trim(),
+    step_number: numOrNull(document.getElementById('lc_step_number').value),
     role: document.getElementById('lc_role').value,
     step_text: document.getElementById('lc_step_text').value.trim(),
   };
-  if(!payload.phase || !payload.step_text){
-    alert('Phase and step text are required.');
+  if(payload.step_number === null || !payload.step_text){
+    alert('Step number and step text are required.');
     return;
   }
 
@@ -4070,7 +4077,7 @@ const SEED_DATA_OTHERFLUIDS = [{"id": "ofseed-10", "sort_order": 10, "model": "A
 const SEED_DATA_PHONES = [{"id": "pxseed-80", "sort_order": 80, "name": null, "role": "Parts Front Counter", "area": "Parts Department", "extension": "301"}, {"id": "pxseed-90", "sort_order": 90, "name": null, "role": "Parts Back Counter", "area": "Parts Department", "extension": "303"}, {"id": "pxseed-100", "sort_order": 100, "name": null, "role": "BDC 1", "area": "BDC", "extension": "602"}, {"id": "pxseed-110", "sort_order": 110, "name": null, "role": "BDC 2", "area": "BDC", "extension": "601"}, {"id": "pxseed-170", "sort_order": 170, "name": null, "role": "Detail", "area": "Shop Floor", "extension": "206"}, {"id": "pxseed-180", "sort_order": 180, "name": null, "role": "Alignment", "area": "Shop Floor", "extension": null}, {"id": "pxseed-190", "sort_order": 190, "name": null, "role": "EV Bay (No Lift)", "area": "Shop Floor", "extension": null}];
 const SEED_DATA_HUNTGROUPS = [{"id": "hgseed-10", "sort_order": 10, "group_number": "1112", "group_name": "BDC / Reception", "members": "601, 602, 700"}, {"id": "hgseed-20", "sort_order": 20, "group_number": "1105", "group_name": "Service Advisors", "members": "200, 202, 203, 204"}, {"id": "hgseed-30", "sort_order": 30, "group_number": "1108", "group_name": "Parts", "members": "300, 301, 303, 304"}, {"id": "hgseed-40", "sort_order": 40, "group_number": "1106", "group_name": "Technicians", "members": "112, 205, 208, 209"}];
 
-const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "phase": "Intake & Scheduling", "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "phase": "Intake & Scheduling", "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-30", "sort_order": 30, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-40", "sort_order": 40, "phase": "Intake & Scheduling", "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-50", "sort_order": 50, "phase": "Intake & Scheduling", "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-60", "sort_order": 60, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "phase": "Diagnosis & Inspection", "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "phase": "Diagnosis & Inspection", "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "phase": "Customer Approval", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-110", "sort_order": 110, "phase": "Customer Approval", "role": "Technician", "step_text": "Return Keys and Paperwork to the Advisor"}, {"id": "lcseed-120", "sort_order": 120, "phase": "Customer Approval", "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-130", "sort_order": 130, "phase": "Customer Approval", "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-140", "sort_order": 140, "phase": "Customer Approval", "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-150", "sort_order": 150, "phase": "Second Dispatch & Repair", "role": "Advisor", "step_text": "Return Keys and Paperwork to Manager for Dispatching"}, {"id": "lcseed-160", "sort_order": 160, "phase": "Second Dispatch & Repair", "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-170", "sort_order": 170, "phase": "Second Dispatch & Repair", "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-180", "sort_order": 180, "phase": "Second Dispatch & Repair", "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-190", "sort_order": 190, "phase": "Second Dispatch & Repair", "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-200", "sort_order": 200, "phase": "Quality Control & Invoicing", "role": "QC Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-210", "sort_order": 210, "phase": "Quality Control & Invoicing", "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-220", "sort_order": 220, "phase": "Quality Control & Invoicing", "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-230", "sort_order": 230, "phase": "Follow-Up", "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-240", "sort_order": 240, "phase": "Follow-Up", "role": "QC Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
+const SEED_DATA_LIFECYCLE = [{"id": "lcseed-10", "sort_order": 10, "step_number": 1, "phase": null, "role": "BDC", "step_text": "Reservation"}, {"id": "lcseed-20", "sort_order": 20, "step_number": 2, "phase": null, "role": "Parts", "step_text": "Inventory Check. Order Parts for Appointment if necessary."}, {"id": "lcseed-30", "sort_order": 30, "step_number": 3, "phase": null, "role": "Advisor", "step_text": "Active Write Up"}, {"id": "lcseed-40", "sort_order": 40, "step_number": 4, "phase": null, "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-50", "sort_order": 50, "step_number": 4, "phase": null, "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-60", "sort_order": 60, "step_number": 5, "phase": null, "role": "Technician", "step_text": "Perform Diagnostic (if needed)"}, {"id": "lcseed-70", "sort_order": 70, "step_number": 6, "phase": null, "role": "Technician", "step_text": "Complete M.P.I. / add A.S.R.'s \u2014 15 minutes!"}, {"id": "lcseed-80", "sort_order": 80, "step_number": 7, "phase": null, "role": "Technician", "step_text": "Complete Original Pre-authorized work"}, {"id": "lcseed-90", "sort_order": 90, "step_number": 7, "phase": null, "role": "Parts", "step_text": "Provide Pricing & Availability for A.S.R.'s \u2014 5 minutes!"}, {"id": "lcseed-100", "sort_order": 100, "step_number": 8, "phase": null, "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-110", "sort_order": 110, "step_number": 8, "phase": null, "role": "Advisor", "step_text": "Provide Customer Status Update"}, {"id": "lcseed-120", "sort_order": 120, "step_number": 9, "phase": null, "role": "Technician", "step_text": "Return Keys and Paperwork to the Advisor"}, {"id": "lcseed-130", "sort_order": 130, "step_number": 9, "phase": null, "role": "Advisor", "step_text": "Present M.P.I. (Green, Red, Yellow)"}, {"id": "lcseed-140", "sort_order": 140, "step_number": 10, "phase": null, "role": "Advisor", "step_text": "Upsell A.S.R.'s \u2014 Approve / Decline"}, {"id": "lcseed-150", "sort_order": 150, "step_number": 11, "phase": null, "role": "Advisor", "step_text": "Return Keys and Paperwork to Manager for Dispatching"}, {"id": "lcseed-160", "sort_order": 160, "step_number": 11, "phase": null, "role": "Parts", "step_text": "Pull Authorized Parts & Place in Back Counter Staging Area"}, {"id": "lcseed-170", "sort_order": 170, "step_number": 12, "phase": null, "role": "QC Manager", "step_text": "Dispatch RO to appropriately trained Technician"}, {"id": "lcseed-180", "sort_order": 180, "step_number": 13, "phase": null, "role": "Technician", "step_text": "Complete Authorized A.S.R.'s"}, {"id": "lcseed-190", "sort_order": 190, "step_number": 14, "phase": null, "role": "Technician", "step_text": "Return Special Tools & Warranty/Core Parts"}, {"id": "lcseed-200", "sort_order": 200, "step_number": 14, "phase": null, "role": "QC Manager", "step_text": "Quality Control Check"}, {"id": "lcseed-210", "sort_order": 210, "step_number": 15, "phase": null, "role": "Advisor", "step_text": "Invoicing"}, {"id": "lcseed-220", "sort_order": 220, "step_number": 16, "phase": null, "role": "Advisor", "step_text": "Active Delivery / Cashiering"}, {"id": "lcseed-230", "sort_order": 230, "step_number": 17, "phase": null, "role": "BDC", "step_text": "Follow Up \u2014 if feedback negative, pass along to Service Manager"}, {"id": "lcseed-240", "sort_order": 240, "step_number": 18, "phase": null, "role": "QC Manager", "step_text": "If feedback negative \u2014 work with customer to provide resolution"}];
 const SEED_DATA_SUBPROCESSES = [{"id": "spseed-10", "sort_order": 10, "name": "Active Write-Up Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-10-1", "sort_order": 10, "step_text": "Meet & Greet"}, {"id": "spsseed-10-2", "sort_order": 20, "step_text": "Perform Vehicle Walk Around \u2014 Install Seat Cover, Steering Wheel Cover & Floor Mat"}, {"id": "spsseed-10-3", "sort_order": 30, "step_text": "Escort Customer Inside \u2014 Roll Appt. to RO / Create Walk-In RO"}, {"id": "spsseed-10-4", "sort_order": 40, "step_text": "Confirm Appointment Work & Reiterate Pricing"}, {"id": "spsseed-10-5", "sort_order": 50, "step_text": "Upsell Additional Work Found from Walk Around"}, {"id": "spsseed-10-6", "sort_order": 60, "step_text": "Confirm Customer's Contact Info & Time Expectations"}]}, {"id": "spseed-20", "sort_order": 20, "name": "Active Delivery Process", "subtitle": null, "ro_subprocess_steps": []}, {"id": "spseed-30", "sort_order": 30, "name": "Quote Process", "subtitle": "\u201cI would like a quote to replace...\u201d", "ro_subprocess_steps": [{"id": "spsseed-30-1", "sort_order": 10, "step_text": "Acquire Parts Pricing & Availability"}, {"id": "spsseed-30-2", "sort_order": 20, "step_text": "Acquire Labor Pricing & Estimated Time for Service"}, {"id": "spsseed-30-3", "sort_order": 30, "step_text": "Assemble Quote"}, {"id": "spsseed-30-4", "sort_order": 40, "step_text": "Call Customer with Quote"}, {"id": "spsseed-30-5", "sort_order": 50, "step_text": "Schedule Appointment for Approved Services in Reynolds"}, {"id": "spsseed-30-6", "sort_order": 60, "step_text": "Order Parts Needed for Appointment"}]}, {"id": "spseed-40", "sort_order": 40, "name": "Reservation Process", "subtitle": null, "ro_subprocess_steps": [{"id": "spsseed-40-1", "sort_order": 10, "step_text": "Ask Customer for Requested Day & Time"}, {"id": "spsseed-40-2", "sort_order": 20, "step_text": "Search for Customer File"}, {"id": "spsseed-40-3", "sort_order": 30, "step_text": "Select the Current Customer File, or Add New Customer"}, {"id": "spsseed-40-4", "sort_order": 40, "step_text": "Select Agreed Upon Day & Time"}, {"id": "spsseed-40-5", "sort_order": 50, "step_text": "Add Work Operations to Appointment, Provide Customer with Pricing"}, {"id": "spsseed-40-6", "sort_order": 60, "step_text": "Appointment Confirmation"}, {"id": "spsseed-40-7", "sort_order": 70, "step_text": "Thank Customer for Choosing Interstate Honda"}]}];
 const SEED_DATA_RORULES = [{"id": "ruleseed-10", "sort_order": 10, "rule_text": "Every Repair Order must be closed if the vehicle has transferred possession back to the customer."}];
 
