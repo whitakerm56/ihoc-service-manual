@@ -2480,10 +2480,12 @@ async function saveVendorRow(){
       await apiWrite(`${CONFIG.API_BASE}/vendors/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newVendor = { id: 'local-' + Date.now(), sort_order: (vendorRows.at(-1)?.sort_order || 0) + 10, vendor_services: [], ...payload };
-    vendorRows.push(newVendor);
-    if(!usingDemoDataVendors){
-      await apiWrite(`${CONFIG.API_BASE}/vendors`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newVendor)});
+    const draft = { sort_order: (vendorRows.at(-1)?.sort_order || 0) + 10, vendor_services: [], ...payload };
+    if(usingDemoDataVendors){
+      vendorRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/vendors`, draft);
+      vendorRows.push({ vendor_services: [], ...saved });
     }
   }
   closeModal();
@@ -2565,10 +2567,12 @@ async function saveServiceRow(){
       await apiWrite(`${CONFIG.API_BASE}/vendor-services/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newService = { id: 'local-' + Date.now(), vendor_id: vendor.id, sort_order: (vendor.vendor_services.at(-1)?.sort_order || 0) + 10, ...payload };
-    vendor.vendor_services.push(newService);
-    if(!usingDemoDataVendors){
-      await apiWrite(`${CONFIG.API_BASE}/vendor-services`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newService)});
+    const draft = { vendor_id: vendor.id, sort_order: (vendor.vendor_services.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataVendors){
+      vendor.vendor_services.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/vendor-services`, draft);
+      vendor.vendor_services.push(saved);
     }
   }
   closeModal();
@@ -2673,10 +2677,12 @@ async function saveOilRow(){
       await apiWrite(`${CONFIG.API_BASE}/oilguide/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (engineOilRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    engineOilRows.push(newRow);
-    if(!usingDemoDataOilGuide){
-      await apiWrite(`${CONFIG.API_BASE}/oilguide`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (engineOilRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataOilGuide){
+      engineOilRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/oilguide`, draft);
+      engineOilRows.push(saved);
     }
   }
   closeModal();
@@ -2781,10 +2787,12 @@ async function saveOtherFluidRow(){
       await apiWrite(`${CONFIG.API_BASE}/otherfluids/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (otherFluidsRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    otherFluidsRows.push(newRow);
-    if(!usingDemoDataOtherFluids){
-      await apiWrite(`${CONFIG.API_BASE}/otherfluids`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (otherFluidsRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataOtherFluids){
+      otherFluidsRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/otherfluids`, draft);
+      otherFluidsRows.push(saved);
     }
   }
   closeModal();
@@ -2895,10 +2903,12 @@ async function saveFluidPartRow(){
       await apiWrite(`${CONFIG.API_BASE}/fluidparts/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (fluidPartsRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    fluidPartsRows.push(newRow);
-    if(!usingDemoDataFluidParts){
-      await apiWrite(`${CONFIG.API_BASE}/fluidparts`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (fluidPartsRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataFluidParts){
+      fluidPartsRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/fluidparts`, draft);
+      fluidPartsRows.push(saved);
     }
   }
   closeModal();
@@ -2986,10 +2996,12 @@ async function savePhoneRow(){
       await apiWrite(`${CONFIG.API_BASE}/phones/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (phoneRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    phoneRows.push(newRow);
-    if(!usingDemoDataPhones){
-      await apiWrite(`${CONFIG.API_BASE}/phones`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (phoneRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataPhones){
+      phoneRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/phones`, draft);
+      phoneRows.push(saved);
     }
   }
   closeModal();
@@ -3066,10 +3078,12 @@ async function saveHuntGroupRow(){
       await apiWrite(`${CONFIG.API_BASE}/huntgroups/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (huntGroupRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    huntGroupRows.push(newRow);
-    if(!usingDemoDataHuntGroups){
-      await apiWrite(`${CONFIG.API_BASE}/huntgroups`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (huntGroupRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataHuntGroups){
+      huntGroupRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/huntgroups`, draft);
+      huntGroupRows.push(saved);
     }
   }
   closeModal();
@@ -3147,10 +3161,12 @@ async function saveLifecycleRow(){
       await apiWrite(`${CONFIG.API_BASE}/lifecycle/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (lifecycleRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    lifecycleRows.push(newRow);
-    if(!usingDemoDataLifecycle){
-      await apiWrite(`${CONFIG.API_BASE}/lifecycle`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (lifecycleRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataLifecycle){
+      lifecycleRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/lifecycle`, draft);
+      lifecycleRows.push(saved);
     }
   }
   closeModal();
@@ -3235,10 +3251,12 @@ async function saveSubprocessRow(){
       await apiWrite(`${CONFIG.API_BASE}/subprocesses/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (subprocessRows.at(-1)?.sort_order || 0) + 10, ro_subprocess_steps: [], ...payload };
-    subprocessRows.push(newRow);
-    if(!usingDemoDataSubprocesses){
-      await apiWrite(`${CONFIG.API_BASE}/subprocesses`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (subprocessRows.at(-1)?.sort_order || 0) + 10, ro_subprocess_steps: [], ...payload };
+    if(usingDemoDataSubprocesses){
+      subprocessRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/subprocesses`, draft);
+      subprocessRows.push({ ro_subprocess_steps: [], ...saved });
     }
   }
   closeModal();
@@ -3306,10 +3324,12 @@ async function saveSubStepRow(){
       await apiWrite(`${CONFIG.API_BASE}/subprocess-steps/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newStep = { id: 'local-' + Date.now(), subprocess_id: sp.id, sort_order: (sp.ro_subprocess_steps.at(-1)?.sort_order || 0) + 10, ...payload };
-    sp.ro_subprocess_steps.push(newStep);
-    if(!usingDemoDataSubprocesses){
-      await apiWrite(`${CONFIG.API_BASE}/subprocess-steps`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newStep)});
+    const draft = { subprocess_id: sp.id, sort_order: (sp.ro_subprocess_steps.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataSubprocesses){
+      sp.ro_subprocess_steps.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/subprocess-steps`, draft);
+      sp.ro_subprocess_steps.push(saved);
     }
   }
   closeModal();
@@ -3373,10 +3393,12 @@ async function saveRuleRow(){
       await apiWrite(`${CONFIG.API_BASE}/rorules/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (roRulesRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    roRulesRows.push(newRow);
-    if(!usingDemoDataRules){
-      await apiWrite(`${CONFIG.API_BASE}/rorules`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (roRulesRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataRules){
+      roRulesRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/rorules`, draft);
+      roRulesRows.push(saved);
     }
   }
   closeModal();
@@ -3554,10 +3576,12 @@ async function saveOrgRow(){
       await apiWrite(`${CONFIG.API_BASE}/org/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (orgRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    orgRows.push(newRow);
-    if(!usingDemoDataOrg){
-      await apiWrite(`${CONFIG.API_BASE}/org`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (orgRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataOrg){
+      orgRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/org`, draft);
+      orgRows.push(saved);
     }
   }
   closeModal();
@@ -3632,10 +3656,12 @@ async function saveRotationPatternRow(){
       await apiWrite(`${CONFIG.API_BASE}/rotationpattern/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (rotationPatternRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    rotationPatternRows.push(newRow);
-    if(!usingDemoDataRotationPattern){
-      await apiWrite(`${CONFIG.API_BASE}/rotationpattern`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (rotationPatternRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataRotationPattern){
+      rotationPatternRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/rotationpattern`, draft);
+      rotationPatternRows.push(saved);
     }
   }
   closeModal();
@@ -3666,10 +3692,11 @@ async function saveRotationAnchor(){
       await apiWrite(`${CONFIG.API_BASE}/rotationanchor/${rotationAnchorRows[0].id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), ...payload };
-    rotationAnchorRows.push(newRow);
-    if(!usingDemoDataRotationAnchor){
-      await apiWrite(`${CONFIG.API_BASE}/rotationanchor`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    if(usingDemoDataRotationAnchor){
+      rotationAnchorRows.push({ id: 'local-' + Date.now(), ...payload });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/rotationanchor`, payload);
+      rotationAnchorRows.push(saved);
     }
   }
   render();
@@ -3738,10 +3765,12 @@ async function saveLaborRateRow(){
       await apiWrite(`${CONFIG.API_BASE}/laborrates/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (laborRateRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    laborRateRows.push(newRow);
-    if(!usingDemoDataLaborRates){
-      await apiWrite(`${CONFIG.API_BASE}/laborrates`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (laborRateRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataLaborRates){
+      laborRateRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/laborrates`, draft);
+      laborRateRows.push(saved);
     }
   }
   closeModal();
@@ -3849,10 +3878,12 @@ async function saveWarrantyRow(){
       await apiWrite(`${CONFIG.API_BASE}/warrantycompanies/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (warrantyCompanyRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    warrantyCompanyRows.push(newRow);
-    if(!usingDemoDataWarranty){
-      await apiWrite(`${CONFIG.API_BASE}/warrantycompanies`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (warrantyCompanyRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataWarranty){
+      warrantyCompanyRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/warrantycompanies`, draft);
+      warrantyCompanyRows.push(saved);
     }
   }
   closeModal();
@@ -3998,10 +4029,12 @@ async function saveRow(){
       await apiWrite(`${CONFIG.API_BASE}/pricing/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (pricingRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    pricingRows.push(newRow);
-    if(!usingDemoData){
-      await apiWrite(`${CONFIG.API_BASE}/pricing`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (pricingRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoData){
+      pricingRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/pricing`, draft);
+      pricingRows.push(saved);
     }
   }
   closeModal();
@@ -4036,10 +4069,12 @@ async function saveMMRow(){
       await apiWrite(`${CONFIG.API_BASE}/mmcodes/${editingId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     }
   } else {
-    const newRow = { id: 'local-' + Date.now(), sort_order: (mmRows.at(-1)?.sort_order || 0) + 10, ...payload };
-    mmRows.push(newRow);
-    if(!usingDemoDataMM){
-      await apiWrite(`${CONFIG.API_BASE}/mmcodes`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newRow)});
+    const draft = { sort_order: (mmRows.at(-1)?.sort_order || 0) + 10, ...payload };
+    if(usingDemoDataMM){
+      mmRows.push({ id: 'local-' + Date.now(), ...draft });
+    } else {
+      const saved = await apiWritePOST(`${CONFIG.API_BASE}/mmcodes`, draft);
+      mmRows.push(saved);
     }
   }
   closeModal();
@@ -4081,6 +4116,22 @@ async function apiWrite(url, options){
     throw new Error('Save failed: ' + res.status);
   }
   return res;
+}
+
+// Inserts a new row and returns the row Supabase actually created —
+// crucially, with its real server-generated UUID. Every "Add new" flow
+// used to send a fake client-side placeholder id (e.g. 'local-172...')
+// as part of the insert payload, which Postgres rejected outright since
+// the id column expects a real uuid. That meant no "Add new" button
+// anywhere in the app could ever successfully create a row against a
+// live database — only edits to already-existing rows worked. This
+// strips any id before sending, and hands back whatever Supabase
+// actually assigned.
+async function apiWritePOST(url, payload){
+  const { id, ...payloadWithoutId } = payload;
+  const res = await apiWrite(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payloadWithoutId)});
+  const data = await res.json();
+  return Array.isArray(data) ? data[0] : data;
 }
 function escapeHtml(s){ return (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s); }
